@@ -171,35 +171,54 @@ function renderSlide(slide,el,small,slideIdx){
   el.innerHTML='';
 
  if (slide.img && !small) {
+if (slide.img && !small) {
   const wrap = document.createElement('div');
   wrap.className = 'img-wrap';
 
   const st = slide.imgState;
 
   wrap.style.cssText = `
-    left: ${st.x}px;
-    top: ${st.y}px;
-    width: ${st.w}px;
-    height: ${st.h}px;
     position: absolute;
-    cursor: default; /* žádný pohyb */
-    touch-action: none;
+    right: 20px;   /* vpravo */
+    top: 20px;
+    width: 320px;  /* větší velikost */
+    height: 220px;
+    cursor: default;
     user-select: none;
+    touch-action: none;
   `;
 
   const im = document.createElement('img');
   im.src = slide.img;
+
   im.style.cssText = `
-    display: block;
     width: 100%;
     height: 100%;
+    display: block;
     object-fit: contain;
-    border-radius: 6px;
+    border-radius: 8px;
     pointer-events: none;
   `;
 
   wrap.appendChild(im);
   el.appendChild(wrap);
+
+} else if (slide.img && small) {
+  const im = document.createElement('img');
+  im.src = slide.img;
+
+  im.style.cssText = `
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: .35;
+    pointer-events: none;
+  `;
+
+  el.appendChild(im);
+}
 
 } else if (slide.img && small) {
   const im = document.createElement('img');
