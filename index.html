@@ -2,6 +2,8 @@
 <html lang="cs">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
 body{
   overscroll-behavior: none;
@@ -12,34 +14,23 @@ body{
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font-sans);background:var(--color-background-tertiary);touch-action:manipulation}
-#app{display:flex;flex-direction:column;height:100vh;min-height:500px}
-#toolbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:8px 10px;display:flex;align-items:center;gap:6px}
-.tb-btn{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--color-text-primary);cursor:pointer;white-space:nowrap;min-height:36px}
+body{font-family:var(--font-sans);background:var(--color-background-tertiary);touch-action:manipulation;-webkit-text-size-adjust:100%}
+#app{display:flex;flex-direction:column;height:100vh;min-height:0}
+#toolbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:8px 10px;display:flex;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0}
+#toolbar::-webkit-scrollbar{display:none}
+.tb-btn{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--color-text-primary);cursor:pointer;white-space:nowrap;min-height:44px;flex-shrink:0;-webkit-tap-highlight-color:transparent}
 .tb-btn.primary{background:#4f46e5;color:#fff;border-color:#4f46e5}
 .tb-btn:active{opacity:.7}
 #slide-area{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:10px;gap:8px;min-height:0}
-#slide-preview{flex:1;border-radius:12px;overflow:hidden;position:relative;cursor:pointer;border:2px solid transparent;min-height:0}
-#slide-preview:hover{border-color:#4f46e5}
+#slide-preview{flex:1;border-radius:12px;overflow:hidden;position:relative;border:2px solid transparent;min-height:0}
 #slide-canvas{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:16px;overflow:hidden;position:relative}
-#slide-canvas h1{font-size:clamp(13px,3vw,22px);font-weight:500;line-height:1.2;margin-bottom:5px;word-break:break-word;z-index:1;position:relative}
-#slide-canvas p{font-size:clamp(10px,2vw,14px);line-height:1.5;opacity:.85;word-break:break-word;white-space:pre-wrap;z-index:1;position:relative}
-.img-wrap {
-  position: absolute;
-  cursor: default;  /* Žádný drag */
-  touch-action: none;
-  user-select: none;
-}
-.img-wrap img{display:block;width:100%;height:100%;object-fit:contain;border-radius:6px;pointer-events:none}
-.img-resize-handle{position:absolute;bottom:-6px;right:-6px;width:16px;height:16px;background:#4f46e5;border-radius:50%;cursor:nwse-resize;touch-action:none;z-index:10}
-#thumbs-row{display:flex;gap:6px;overflow-x:auto;padding:2px 0;flex-shrink:0;min-height:52px}
-#thumbs-row::-webkit-scrollbar{height:3px}
-#thumbs-row::-webkit-scrollbar-thumb{background:var(--color-border-secondary);border-radius:2px}
-.thumb{min-width:68px;height:48px;border-radius:6px;border:1.5px solid var(--color-border-tertiary);cursor:pointer;flex-shrink:0;overflow:hidden;position:relative}
+#thumbs-row{display:flex;gap:6px;overflow-x:auto;padding:2px 0;flex-shrink:0;min-height:56px;-webkit-overflow-scrolling:touch}
+#thumbs-row::-webkit-scrollbar{display:none}
+.thumb{min-width:68px;height:48px;border-radius:6px;border:1.5px solid var(--color-border-tertiary);flex-shrink:0;overflow:hidden;position:relative;-webkit-tap-highlight-color:transparent}
 .thumb.active{border-color:#4f46e5;border-width:2px}
-.thumb .del{position:absolute;top:1px;right:2px;font-size:9px;color:#fff;background:rgba(0,0,0,.5);border-radius:3px;padding:0 3px;cursor:pointer;z-index:2;line-height:14px}
+.thumb .del{position:absolute;top:0;right:0;font-size:10px;color:#fff;background:rgba(0,0,0,.55);border-radius:3px;padding:2px 5px;z-index:2;line-height:16px;min-width:20px;min-height:20px;display:flex;align-items:center;justify-content:center}
 .thumb .tnum{position:absolute;bottom:2px;left:3px;font-size:8px;opacity:.6}
-#edit-panel{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:38vh;flex-shrink:0}
+#edit-panel{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:40vh;flex-shrink:0;-webkit-overflow-scrolling:touch}
 .ep-row{display:flex;gap:8px;align-items:center}
 .ep-label{font-size:11px;color:var(--color-text-secondary);min-width:46px}
 
@@ -49,7 +40,7 @@ input[type=text],textarea{
   border:1px solid rgba(0,0,0,0.1);
   border-radius:10px;
   padding:10px 12px;
-  font-size:13px;
+  font-size:16px;
   background:#fff;
   color:var(--color-text-primary);
   box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);
@@ -57,23 +48,16 @@ input[type=text],textarea{
 
 
 textarea{resize:none;min-height:44px}
-.color-row{display:flex;gap:5px;flex-wrap:wrap}
-.color-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0}
+.color-row{display:flex;gap:8px;flex-wrap:wrap}
+.color-swatch{width:32px;height:32px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;-webkit-tap-highlight-color:transparent}
 .color-swatch.active{border-color:var(--color-text-primary)}
-.photo-preview{width:40px;height:30px;border-radius:6px;object-fit:cover;border:0.5px solid var(--color-border-secondary)}
-.photo-placeholder{width:40px;height:30px;border-radius:6px;border:0.5px dashed var(--color-border-secondary);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--color-text-tertiary)}
-.rm-btn{font-size:11px;color:#e24b4a;cursor:pointer;padding:4px 8px;border:0.5px solid #e24b4a;border-radius:6px;min-height:32px}
 #present-overlay{display:none;position:fixed;inset:0;z-index:9999;flex-direction:column}
 #present-overlay.show{display:flex}
 #present-slide{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;overflow:hidden;position:relative}
-#present-slide h1{font-size:clamp(18px,5vw,44px);font-weight:500;line-height:1.15;margin-bottom:8px;position:relative;z-index:1}
-#present-slide p{font-size:clamp(12px,2.8vw,20px);line-height:1.55;opacity:.9;white-space:pre-wrap;position:relative;z-index:1}
-#present-slide .pimg-wrap{position:absolute;touch-action:none;user-select:none}
-#present-slide .pimg-wrap img{display:block;width:100%;height:100%;object-fit:contain;border-radius:10px;pointer-events:none}
-#present-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(0,0,0,.3);flex-shrink:0}
-.pnav-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:10px 18px;font-size:14px;color:#fff;cursor:pointer;min-height:40px}
+#present-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(0,0,0,.3);flex-shrink:0}
+.pnav-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:12px 20px;font-size:18px;color:#fff;min-height:48px;min-width:48px;-webkit-tap-highlight-color:transparent}
 #present-counter{font-size:13px;color:rgba(255,255,255,.7)}
-#file-input{display:none}
+#file-input,#file-input-2{display:none}
 </style>
 
 <div id="app">
@@ -81,6 +65,7 @@ textarea{resize:none;min-height:44px}
     <button class="tb-btn" onclick="addSlide()">+ snímek</button>
     <button class="tb-btn" onclick="duplicateSlide()">kopie</button>
     <button class="tb-btn primary" onclick="startPresent()">&#9654; prezentuj</button>
+    <button class="tb-btn" id="pdf-btn" onclick="exportPDF()">&#8595; PDF</button>
   </div>
   <div id="slide-area">
     <div id="slide-preview" onclick="focusEdit()">
@@ -97,10 +82,7 @@ textarea{resize:none;min-height:44px}
       <span class="ep-label">Text</span>
       <textarea id="inp-body" placeholder="Popis / obsah snímku" oninput="updateCurrent()"></textarea>
     </div>
-    <div class="ep-row">
-      <span class="ep-label">Fotka</span>
-      <div id="photo-row" style="display:flex;gap:8px;align-items:center"></div>
-    </div>
+
     <div class="ep-row">
       <span class="ep-label">Pozadí</span>
       <div class="color-row" id="color-row"></div>
@@ -119,6 +101,7 @@ textarea{resize:none;min-height:44px}
 </div>
 
 <input type="file" id="file-input" accept="image/*">
+<input type="file" id="file-input-2" accept="image/*">
 
 <script>
 const COLORS=[
@@ -129,12 +112,13 @@ const COLORS=[
 ];
 
 let slides=[
-  {title:'Fotožurnalistika a etika',body:'Seminární prezentace',bg:'#1e1b4b',text:'#e0e7ff',img:null,imgState:{x:10,y:10,w:120,h:90}},
-  {title:'Fotografie',body:'Vlož fotografii z oblasti fotožurnalistiky, která je eticky diskutabilní.\n(např. Napalm Girl, The Falling Man, Vulture and the Little Girl, Tank Man, Alan Kurdi, Execution of Nguyễn Văn Lém)\n\nZdroj: Google — články a zpravodajství',bg:'#1e3a5f',text:'#dbeafe',img:null,imgState:{x:10,y:10,w:120,h:90}},
-  {title:'Kontext',body:'Co fotografie zachycuje?\n\nZa jakých okolností vznikla?',bg:'#14532d',text:'#dcfce7',img:null,imgState:{x:10,y:10,w:120,h:90}},
-  {title:'Význam a dopad',body:'Jaký měla fotografie vliv na veřejnost?\n\nVyvolala nějakou reakci?\n(diskuzi, změnu názoru, pomoc apod.)',bg:'#7c2d12',text:'#ffedd5',img:null,imgState:{x:10,y:10,w:120,h:90}},
-  {title:'Etické zhodnocení — vlastní názor',body:'Je podle tebe správné tuto fotografii zveřejnit? (ANO / NE)\n\nProč ano / proč ne? (min. 5 vět)\n\nJaké etické problémy fotografie vyvolává?\n(soukromí, důstojnost, manipulace, šokování veřejnosti…)',bg:'#831843',text:'#fce7f3',img:null,imgState:{x:10,y:10,w:120,h:90}},
-  {title:'Závěr',body:'Co je podle tebe fotožurnalistika?\n\nProč je důležitá etika při zveřejňování fotografií?\n\nMěla by mít média nějaké hranice? Jaké?',bg:'#18181b',text:'#f4f4f5',img:null,imgState:{x:10,y:10,w:120,h:90}},
+  {title:'Fotožurnalistika a etika',body:'Seminární prezentace',bg:'#1e1b4b',text:'#e0e7ff',img:null},
+  {title:'Fotografie',body:'Vlož fotografii z oblasti fotožurnalistiky, která je eticky diskutabilní.\n(např. Napalm Girl, The Falling Man, Vulture and the Little Girl, Tank Man, Alan Kurdi, Execution of Nguyễn Văn Lém)\n\nZdroj: Google — články a zpravodajství',bg:'#1e3a5f',text:'#dbeafe',img:null},
+  {title:'Autor fotografie',body:'Kdo fotografii pořídil?\n\nMěla jeho fotografie pozitivní nebo negativní dopad na jeho život?\n\nNějakou zajímavost o něm.',bg:'#1e3a5f',text:'#dbeafe',img:null},
+  {title:'Kontext',body:'Co fotografie zachycuje?\n\nZa jakých okolností vznikla?',bg:'#14532d',text:'#dcfce7',img:null},
+  {title:'Význam a dopad',body:'Jaký měla fotografie vliv na veřejnost?\n\nVyvolala nějakou reakci?\n(diskuzi, změnu názoru, pomoc apod.)',bg:'#7c2d12',text:'#ffedd5',img:null},
+  {title:'Etické zhodnocení — vlastní názor, ne názor od AI',body:'Je podle tebe správné tuto fotografii zveřejnit? (ANO / NE)\n\nProč ano / proč ne? (min. 5 vět)\n\nJaké etické problémy fotografie vyvolává?\n(soukromí, důstojnost, manipulace, šokování veřejnosti…)',bg:'#831843',text:'#fce7f3',img:null},
+  {title:'Závěr',body:'Co je podle tebe fotožurnalistika?\n\nProč je důležitá etika při zveřejňování fotografií?\n\nMěla by mít média nějaké hranice? Jaké?',bg:'#18181b',text:'#f4f4f5',img:null},
 ];
 
 let cur=0,presIdx=0;
@@ -158,108 +142,180 @@ function setColor(i){
   render();
 }
 
-function getTextAlign(slideIdx){
-  return slideIdx===0?'center':'left';
-}
-
 function renderSlide(slide,el,small,slideIdx){
   el.style.background=slide.bg;
   el.style.color=slide.text;
-  const align=getTextAlign(slideIdx);
-  el.style.alignItems=align==='center'?'center':'flex-start';
   el.style.justifyContent='center';
   el.innerHTML='';
 
- if (slide.img && !small) {
-if (slide.img && !small) {
-  const wrap = document.createElement('div');
-  wrap.className = 'img-wrap';
+  const isCenter = slideIdx===0;
+  el.style.alignItems = isCenter?'center':'flex-start';
 
-  const st = slide.imgState;
+  // --- DEKORATIVNÍ POZADÍ (subtle pattern) ---
+  if(!small){
+    const deco=document.createElement('div');
+    deco.style.cssText=`
+      position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;
+    `;
+    // Velký kruh v rohu (dekorace)
+    deco.innerHTML=`<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0">
+      <circle cx="${isCenter?'50%':'92%'}" cy="${isCenter?'110%':'50%'}" r="${isCenter?'55%':'45%'}" fill="rgba(255,255,255,0.04)"/>
+      <circle cx="${isCenter?'50%':'88%'}" cy="${isCenter?'110%':'50%'}" r="${isCenter?'42%':'32%'}" fill="rgba(255,255,255,0.03)"/>
+    </svg>`;
+    el.appendChild(deco);
+  }
 
-  wrap.style.cssText = `
-    position: absolute;
-    right: 20px;   /* vpravo */
-    top: 20px;
-    width: 320px;  /* větší velikost */
-    height: 220px;
-    cursor: default;
-    user-select: none;
-    touch-action: none;
-  `;
+  // --- ČÍSLO SNÍMKU (pravý horní roh, jen ne small, ne slide 0) ---
+  if(!small && slideIdx>0){
+    const num=document.createElement('div');
+    num.style.cssText=`
+      position:absolute;top:10px;right:14px;
+      font-family:'Inter',sans-serif;font-size:clamp(8px,1.4vw,11px);
+      font-weight:500;letter-spacing:.06em;opacity:0.35;z-index:2;
+    `;
+    num.textContent=String(slideIdx+1).padStart(2,'0');
+    el.appendChild(num);
+  }
 
-  const im = document.createElement('img');
-  im.src = slide.img;
+  // --- FOTO OBLAST (slide 1 = fotografie, slide 2 = autor) ---
+  if (slideIdx === 1 || slideIdx === 2) {
+    const inputId = slideIdx === 2 ? 'file-input-2' : 'file-input';
+    const isPortrait = slideIdx === 2;
+    if (slide.img && !small) {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = `
+        position: absolute;right: 5%;top: 50%;transform: translateY(-50%);
+        width: 40%;max-width: 280px;aspect-ratio: ${isPortrait ? '3/4' : '4/3'};
+        border-radius: 10px;overflow: hidden;pointer-events: none;user-select: none;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.35);
+      `;
+      const im = document.createElement('img');
+      im.src = slide.img;
+      im.style.cssText = 'display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;';
+      wrap.appendChild(im);
+      el.appendChild(wrap);
+    } else if (!small) {
+      const zone = document.createElement('div');
+      zone.style.cssText = `
+        position: absolute;right: 5%;top: 50%;transform: translateY(-50%);
+        width: 40%;max-width: 280px;aspect-ratio: ${isPortrait ? '3/4' : '4/3'};
+        border: 1.5px dashed rgba(255,255,255,0.3);border-radius: 10px;
+        display: flex;flex-direction: column;align-items: center;justify-content: center;gap: 6px;
+        cursor: pointer;background: rgba(255,255,255,0.05);z-index: 2;
+      `;
+      const icon = document.createElement('div');
+      icon.textContent = isPortrait ? '🧑‍🎨' : '📷';
+      icon.style.cssText = 'font-size:clamp(18px,3.5vw,28px);';
+      const label = document.createElement('div');
+      label.textContent = isPortrait ? 'Přidej foto autora' : 'Přidej fotografii';
+      label.style.cssText = 'font-family:Inter,sans-serif;font-size:clamp(8px,1.6vw,12px);opacity:0.6;text-align:center;padding:0 8px;font-weight:400;';
+      zone.appendChild(icon);zone.appendChild(label);
+      zone.addEventListener('click', e => { e.stopPropagation(); document.getElementById(inputId).click(); });
+      zone.addEventListener('touchend', e => { e.stopPropagation(); document.getElementById(inputId).click(); }, {passive:true});
+      el.appendChild(zone);
+    } else if (slide.img && small) {
+      const im = document.createElement('img');
+      im.src = slide.img;
+      im.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.3;pointer-events:none;';
+      el.appendChild(im);
+    }
+  }
 
-  im.style.cssText = `
-    width: 100%;
-    height: 100%;
-    display: block;
-    object-fit: contain;
-    border-radius: 8px;
-    pointer-events: none;
-  `;
-
-  wrap.appendChild(im);
-  el.appendChild(wrap);
-
-} else if (slide.img && small) {
-  const im = document.createElement('img');
-  im.src = slide.img;
-
-  im.style.cssText = `
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: .35;
-    pointer-events: none;
-  `;
-
-  el.appendChild(im);
-}
-
-} else if (slide.img && small) {
-  const im = document.createElement('img');
-  im.src = slide.img;
-  im.style.cssText = `
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: .35;
-    pointer-events: none;
-  `;
-  el.appendChild(im);
-}
+  // --- HLAVNÍ OBSAH ---
+  const pad = small ? '3px 5px' : (isCenter ? '0 8%' : '0 6%');
+  // slide 1 a 2 mají foto vpravo → text jen v levé části
+  const w = (!small && (slideIdx===1 || slideIdx===2)) ? '54%' : '100%';
 
   const tw=document.createElement('div');
-  tw.style.cssText='position:relative;z-index:1;width:100%;text-align:'+align;
-  if(slide.title){
-    const h=document.createElement('h1');
-    h.textContent=slide.title;
-    if(small)h.style.fontSize='7px';
-    tw.appendChild(h);
+  tw.style.cssText=`position:relative;z-index:1;width:${w};text-align:${isCenter?'center':'left'};${small?'':'padding:'+pad};`;
+
+  if(isCenter && !small){
+    // ÚVODNÍ SLIDE — velký centrovaný nadpis + dekorativní čára
+    if(slide.title){
+      const h=document.createElement('div');
+      h.style.cssText=`
+        font-family:'Playfair Display',Georgia,serif;
+        font-size:clamp(14px,3.5vw,26px);font-weight:700;
+        line-height:1.1;letter-spacing:-.01em;margin-bottom:10px;
+      `;
+      h.textContent=slide.title;
+      tw.appendChild(h);
+    }
+    // Dekorativní linka pod nadpisem
+    const line=document.createElement('div');
+    line.style.cssText=`
+      width:40px;height:2px;background:currentColor;opacity:0.4;
+      margin:0 auto 10px;border-radius:2px;
+    `;
+    tw.appendChild(line);
+    if(slide.body){
+      const p=document.createElement('div');
+      p.style.cssText=`
+        font-family:'Inter',sans-serif;font-size:clamp(9px,1.8vw,13px);
+        opacity:0.6;letter-spacing:.08em;text-transform:uppercase;font-weight:400;
+      `;
+      p.textContent=slide.body;
+      tw.appendChild(p);
+    }
+  } else if(!small) {
+    // OBSAHOVÝ SLIDE — levý layout s nadpisem, linkou, textem
+    if(slide.title){
+      const h=document.createElement('div');
+      h.style.cssText=`
+        font-family:'Playfair Display',Georgia,serif;
+        font-size:clamp(12px,2.8vw,20px);font-weight:700;
+        line-height:1.15;margin-bottom:8px;letter-spacing:-.01em;
+      `;
+      h.textContent=slide.title;
+      tw.appendChild(h);
+    }
+    // Oddělovač nadpisu od textu
+    const sep=document.createElement('div');
+    sep.style.cssText=`
+      display:flex;align-items:center;gap:8px;margin-bottom:10px;
+    `;
+    const sepLine=document.createElement('div');
+    sepLine.style.cssText=`height:1px;width:32px;background:currentColor;opacity:0.35;flex-shrink:0;`;
+    const sepDot=document.createElement('div');
+    sepDot.style.cssText=`width:4px;height:4px;border-radius:50%;background:currentColor;opacity:0.35;flex-shrink:0;`;
+    sep.appendChild(sepLine);sep.appendChild(sepDot);
+    tw.appendChild(sep);
+
+    if(slide.body){
+      // Rozdělit body na odstavce, každý zvlášť
+      const paras=slide.body.split(/\n\n+/);
+      paras.forEach((para,pi)=>{
+        if(!para.trim())return;
+        const lines=para.split('\n');
+        const isQuestion=lines[0].trim().endsWith('?');
+        const pEl=document.createElement('div');
+        pEl.style.cssText=`
+          font-family:'Inter',sans-serif;
+          font-size:clamp(8px,1.6vw,12px);
+          line-height:1.65;font-weight:${isQuestion?'500':'300'};
+          opacity:${isQuestion?'0.95':'0.82'};
+          margin-bottom:${pi<paras.length-1?'8px':'0'};
+          white-space:pre-wrap;
+        `;
+        pEl.textContent=para.trim();
+        tw.appendChild(pEl);
+      });
+    }
+  } else {
+    // SMALL (thumbnail)
+    if(slide.title){
+      const h=document.createElement('div');
+      h.style.cssText=`font-size:6px;font-weight:600;font-family:Georgia,serif;color:${slide.text};word-break:break-word;overflow:hidden;max-height:14px;margin-bottom:2px;`;
+      h.textContent=slide.title;tw.appendChild(h);
+    }
+    if(slide.body){
+      const p=document.createElement('div');
+      p.style.cssText=`font-size:4px;opacity:.65;overflow:hidden;max-height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;`;
+      p.textContent=slide.body.replace(/\n/g,' ');tw.appendChild(p);
+    }
   }
-  if(slide.body){
-    const p=document.createElement('p');
-    p.textContent=slide.body;
-    if(small)p.style.fontSize='5.5px';
-    tw.appendChild(p);
-  }
+
   el.appendChild(tw);
-}
-
-function setupDrag(wrap,slide,handle) {
-  let dragging=false,resizing=false,startX=0,startY=0,origX=0,origY=0,origW=0,origH=0;
-  const getPos=e=>e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY};
-
-  wrap.addEventListener('mousedown',e=>{if(e.target===handle)return;dragging=true;const p=getPos(e);startX=p.x;startY=p.y;origX=slide.imgState.x;origY=slide.imgState.y;e.preventDefault();});
-  wrap.addEventListener('touchstart',e=>{if(e.target===handle)return;dragging=true;const p=getPos(e);startX=p.x;startY=p.y;origX=slide.imgState.x;origY=slide.imgState.y;},{passive:true});
-  handle.addEventListener('mousedown',e=>{resizing=true;const p=getPos(e);startX=p.x;startY=p.y;origW=slide.imgState.w;origH=slide.imgState.h;e.preventDefault();e.stopPropagation();});
-  handle.addEventListener('touchstart',e=>{resizing=true;const p=getPos(e);startX=p.x;startY=p.y;origW=slide.imgState.w;origH=slide.imgState.h;e.stopPropagation();},{passive:true});
 }
 
 
@@ -299,20 +355,6 @@ function renderThumbs(){
   });
 }
 
-function renderPhotoRow(){
-  const row=document.getElementById('photo-row');
-  row.innerHTML='';
-  const s=slides[cur];
-  if(s.img){
-    const img=document.createElement('img');img.src=s.img;img.className='photo-preview';row.appendChild(img);
-    const rm=document.createElement('span');rm.className='rm-btn';rm.textContent='odebrat';
-    rm.onclick=()=>{slides[cur].img=null;render();};row.appendChild(rm);
-  } else {
-    const ph=document.createElement('div');ph.className='photo-placeholder';ph.textContent='🖼';row.appendChild(ph);
-    const btn=document.createElement('button');btn.className='tb-btn';btn.textContent='vybrat soubor';
-    btn.onclick=()=>document.getElementById('file-input').click();row.appendChild(btn);
-  }
-}
 
 function syncInputs(){
   const s=slides[cur];
@@ -320,7 +362,7 @@ function syncInputs(){
   document.getElementById('inp-body').value=s.body||'';
   const cidx=COLORS.findIndex(c=>c.bg===s.bg);
   document.querySelectorAll('.color-swatch').forEach((sw,j)=>sw.classList.toggle('active',j===cidx));
-  renderPhotoRow();
+
 }
 
 function render(){
@@ -340,13 +382,13 @@ function focusEdit(){document.getElementById('inp-title').focus();}
 
 function addSlide(){
   const prev=slides[cur];
-  slides.splice(cur+1,0,{title:'Nový snímek',body:'',bg:prev.bg,text:prev.text,img:null,imgState:{x:10,y:10,w:120,h:90}});
+  slides.splice(cur+1,0,{title:'Nový snímek',body:'',bg:prev.bg,text:prev.text,img:null});
   cur++;render();
 }
 
 function duplicateSlide(){
   const s=slides[cur];
-  slides.splice(cur+1,0,{...s,imgState:{...s.imgState}});
+  slides.splice(cur+1,0,{...s});
   cur++;render();
 }
 
@@ -360,7 +402,14 @@ function deleteSlide(i){
 document.getElementById('file-input').addEventListener('change',function(){
   const file=this.files[0];if(!file)return;
   const reader=new FileReader();
-  reader.onload=e=>{slides[cur].img=e.target.result;slides[cur].imgState={x:10,y:10,w:140,h:110};render();};
+  reader.onload=e=>{slides[1].img=e.target.result;render();};
+  reader.readAsDataURL(file);this.value='';
+});
+
+document.getElementById('file-input-2').addEventListener('change',function(){
+  const file=this.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{slides[2].img=e.target.result;render();};
   reader.readAsDataURL(file);this.value='';
 });
 
@@ -372,27 +421,78 @@ function renderPresent(){
   const s=slides[presIdx];
   const el=document.getElementById('present-slide');
   el.style.background=s.bg;el.style.color=s.text;
-  const align=getTextAlign(presIdx);
-  el.style.alignItems=align==='center'?'center':'flex-start';
-  el.style.textAlign=align;
+  const isCenter=presIdx===0;
+  el.style.alignItems=isCenter?'center':'flex-start';
+  el.style.textAlign=isCenter?'center':'left';
   el.innerHTML='';
-  if(s.img){
+
+  // Dekorativní kruhy na pozadí
+  const deco=document.createElement('div');
+  deco.style.cssText='position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;';
+  deco.innerHTML=`<svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" style="position:absolute;inset:0">
+    <circle cx="${isCenter?'50%':'95%'}" cy="${isCenter?'115%':'50%'}" r="${isCenter?'60%':'50%'}" fill="rgba(255,255,255,0.04)"/>
+    <circle cx="${isCenter?'50%':'90%'}" cy="${isCenter?'115%':'50%'}" r="${isCenter?'46%':'36%'}" fill="rgba(255,255,255,0.03)"/>
+  </svg>`;
+  el.appendChild(deco);
+
+  // Číslo snímku
+  if(presIdx>0){
+    const num=document.createElement('div');
+    num.style.cssText='position:absolute;top:18px;right:22px;font-family:Inter,sans-serif;font-size:13px;font-weight:500;letter-spacing:.06em;opacity:0.3;z-index:2;';
+    num.textContent=String(presIdx+1).padStart(2,'0');
+    el.appendChild(num);
+  }
+
+  // Foto na slide 1 (fotografie) a slide 2 (autor)
+  if(s.img && (presIdx===1 || presIdx===2)){
+    const isPortrait = presIdx===2;
     const wrap=document.createElement('div');
-    wrap.className='pimg-wrap';
-    const prect=el.getBoundingClientRect();
-    const cw=document.getElementById('slide-canvas').offsetWidth||320;
-    const ch=document.getElementById('slide-canvas').offsetHeight||200;
-    const scaleX=prect.width/cw,scaleY=prect.height/ch;
-    const st=s.imgState;
-    wrap.style.cssText='left:'+(st.x*scaleX)+'px;top:'+(st.y*scaleY)+'px;width:'+(st.w*scaleX)+'px;height:'+(st.h*scaleY)+'px;position:absolute';
+    wrap.style.cssText=`position:absolute;right:5%;top:50%;transform:translateY(-50%);width:40%;max-width:440px;aspect-ratio:${isPortrait?'3/4':'4/3'};pointer-events:none;border-radius:12px;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.4);`;
     const im=document.createElement('img');im.src=s.img;
-    im.style.cssText='display:block;width:100%;height:100%;object-fit:contain;border-radius:10px;pointer-events:none';
+    im.style.cssText='display:block;width:100%;height:100%;object-fit:cover;pointer-events:none';
     wrap.appendChild(im);el.appendChild(wrap);
   }
+
+  const textW = (!isCenter && (presIdx===1||presIdx===2) && s.img) ? '54%' : '100%';
   const tw=document.createElement('div');
-  tw.style.cssText='position:relative;z-index:1;width:100%;padding:0 8px;text-align:'+align;
-  if(s.title){const h=document.createElement('h1');h.textContent=s.title;tw.appendChild(h);}
-  if(s.body){const p=document.createElement('p');p.textContent=s.body;tw.appendChild(p);}
+  tw.style.cssText=`position:relative;z-index:1;width:${textW};padding:0 ${isCenter?'8%':'7%'};text-align:${isCenter?'center':'left'};`;
+
+  if(isCenter){
+    if(s.title){
+      const h=document.createElement('div');
+      h.style.cssText='font-family:"Playfair Display",Georgia,serif;font-size:clamp(24px,5.5vw,58px);font-weight:700;line-height:1.08;margin-bottom:16px;letter-spacing:-.02em;';
+      h.textContent=s.title;tw.appendChild(h);
+    }
+    const line=document.createElement('div');
+    line.style.cssText='width:48px;height:2px;background:currentColor;opacity:0.38;margin:0 auto 16px;border-radius:2px;';
+    tw.appendChild(line);
+    if(s.body){
+      const p=document.createElement('div');
+      p.style.cssText='font-family:Inter,sans-serif;font-size:clamp(13px,2vw,18px);opacity:0.55;letter-spacing:.1em;text-transform:uppercase;font-weight:400;';
+      p.textContent=s.body;tw.appendChild(p);
+    }
+  } else {
+    if(s.title){
+      const h=document.createElement('div');
+      h.style.cssText='font-family:"Playfair Display",Georgia,serif;font-size:clamp(20px,4.5vw,46px);font-weight:700;line-height:1.1;margin-bottom:14px;letter-spacing:-.02em;';
+      h.textContent=s.title;tw.appendChild(h);
+    }
+    const sep=document.createElement('div');
+    sep.style.cssText='display:flex;align-items:center;gap:10px;margin-bottom:18px;';
+    const sepLine=document.createElement('div');sepLine.style.cssText='height:1px;width:40px;background:currentColor;opacity:0.3;';
+    const sepDot=document.createElement('div');sepDot.style.cssText='width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0.3;';
+    sep.appendChild(sepLine);sep.appendChild(sepDot);tw.appendChild(sep);
+    if(s.body){
+      const paras=s.body.split(/\n\n+/);
+      paras.forEach((para,pi)=>{
+        if(!para.trim())return;
+        const isQ=para.trim().split('\n')[0].endsWith('?');
+        const p=document.createElement('div');
+        p.style.cssText=`font-family:Inter,sans-serif;font-size:clamp(13px,2.2vw,20px);line-height:1.65;font-weight:${isQ?'500':'300'};opacity:${isQ?'.92':'.78'};margin-bottom:${pi<paras.length-1?'14px':'0'};white-space:pre-wrap;`;
+        p.textContent=para.trim();tw.appendChild(p);
+      });
+    }
+  }
   el.appendChild(tw);
   document.getElementById('present-counter').textContent=(presIdx+1)+' / '+slides.length;
 }
@@ -412,4 +512,46 @@ document.getElementById('present-slide').addEventListener('touchend',e=>{
 },{passive:true});
 
 buildColorRow();render();
+
+async function exportPDF(){
+  const btn=document.getElementById('pdf-btn');
+  btn.textContent='⏳ generuji…';btn.disabled=true;
+  try{
+    // Dynamicky načti knihovny
+    if(!window.html2canvas){
+      await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+    }
+    if(!window.jspdf){
+      await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+    }
+    const {jsPDF}=window.jspdf;
+    // A4 landscape
+    const pdf=new jsPDF({orientation:'landscape',unit:'px',format:[1122,794],hotfixes:['px_scaling']});
+    const W=1122,H=794;
+
+    // Dočasný kontejner pro renderování
+    const container=document.createElement('div');
+    container.style.cssText=`position:fixed;left:-9999px;top:0;width:${W}px;height:${H}px;overflow:hidden;`;
+    document.body.appendChild(container);
+
+    const savedCur=cur;
+    for(let i=0;i<slides.length;i++){
+      const canvas=document.createElement('div');
+      canvas.style.cssText=`width:${W}px;height:${H}px;display:flex;flex-direction:column;justify-content:center;align-items:${i===0?'center':'flex-start'};overflow:hidden;position:relative;background:${slides[i].bg};color:${slides[i].text};`;
+      container.innerHTML='';
+      container.appendChild(canvas);
+      renderSlide(slides[i],canvas,false,i);
+      const imgData=await html2canvas(canvas,{scale:1,useCORS:true,backgroundColor:slides[i].bg,width:W,height:H,logging:false});
+      if(i>0)pdf.addPage();
+      pdf.addImage(imgData.toDataURL('image/jpeg',0.92),'JPEG',0,0,W,H);
+    }
+    document.body.removeChild(container);
+    cur=savedCur;
+    pdf.save('prezentace.pdf');
+  }catch(err){
+    alert('Chyba při generování PDF: '+err.message);
+    console.error(err);
+  }
+  btn.textContent='↓ PDF';btn.disabled=false;
+}
 </script>
