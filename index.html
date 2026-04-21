@@ -1,55 +1,86 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
-body{
-  overscroll-behavior: none;
+:root{
+  --color-background-primary:#ffffff;
+  --color-background-secondary:#f3f4f6;
+  --color-background-tertiary:#e5e7eb;
+  --color-border-tertiary:#d1d5db;
+  --color-border-secondary:#e5e7eb;
+  --color-text-primary:#111827;
+  --color-text-secondary:#6b7280;
+  --font-sans:'Inter',system-ui,-apple-system,sans-serif;
 }
-
-#slide-preview{
-  touch-action: none;
+@media(prefers-color-scheme:dark){
+  :root{
+    --color-background-primary:#1c1c1e;
+    --color-background-secondary:#2c2c2e;
+    --color-background-tertiary:#3a3a3c;
+    --color-border-tertiary:#48484a;
+    --color-border-secondary:#3a3a3c;
+    --color-text-primary:#f2f2f7;
+    --color-text-secondary:#aeaeb2;
+  }
+}
+body{
+  overscroll-behavior:none;
 }
 
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:var(--font-sans);background:var(--color-background-tertiary);touch-action:manipulation;-webkit-text-size-adjust:100%}
-#app{display:flex;flex-direction:column;height:100vh;min-height:0}
+body{font-family:var(--font-sans);background:var(--color-background-tertiary);touch-action:manipulation;-webkit-text-size-adjust:100%;height:100dvh;overflow:hidden;}
+#app{display:flex;flex-direction:column;height:100dvh;min-height:0;}
 #toolbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:8px 10px;display:flex;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0}
 #toolbar::-webkit-scrollbar{display:none}
 .tb-btn{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--color-text-primary);cursor:pointer;white-space:nowrap;min-height:44px;flex-shrink:0;-webkit-tap-highlight-color:transparent}
 .tb-btn.primary{background:#4f46e5;color:#fff;border-color:#4f46e5}
 .tb-btn:active{opacity:.7}
-#slide-area{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:10px;gap:8px;min-height:0}
+#slide-area{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:10px;gap:8px;min-height:0;background:var(--color-background-tertiary);}
 #slide-preview{flex:1;border-radius:12px;overflow:hidden;position:relative;border:2px solid transparent;min-height:0}
-#slide-canvas{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:16px;overflow:hidden;position:relative}
+#slide-canvas{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:16px;overflow:hidden;position:relative;background:#1e1b4b;color:#e0e7ff;}
 #thumbs-row{display:flex;gap:6px;overflow-x:auto;padding:2px 0;flex-shrink:0;min-height:56px;-webkit-overflow-scrolling:touch}
 #thumbs-row::-webkit-scrollbar{display:none}
-.thumb{min-width:68px;height:48px;border-radius:6px;border:1.5px solid var(--color-border-tertiary);flex-shrink:0;overflow:hidden;position:relative;-webkit-tap-highlight-color:transparent}
+.thumb{min-width:68px;width:68px;height:48px;border-radius:6px;border:1.5px solid var(--color-border-tertiary);flex-shrink:0;overflow:hidden;position:relative;-webkit-tap-highlight-color:transparent}
 .thumb.active{border-color:#4f46e5;border-width:2px}
-.thumb .del{position:absolute;top:0;right:0;font-size:10px;color:#fff;background:rgba(0,0,0,.55);border-radius:3px;padding:2px 5px;z-index:2;line-height:16px;min-width:20px;min-height:20px;display:flex;align-items:center;justify-content:center}
-.thumb .tnum{position:absolute;bottom:2px;left:3px;font-size:8px;opacity:.6}
-#edit-panel{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:40vh;flex-shrink:0;-webkit-overflow-scrolling:touch}
+.thumb .del{position:absolute;top:0;right:0;font-size:11px;color:#fff;background:rgba(0,0,0,.6);border-radius:3px;padding:3px 6px;z-index:2;line-height:16px;min-width:26px;min-height:26px;display:flex;align-items:center;justify-content:center;}
+.thumb .tnum{position:absolute;bottom:2px;left:3px;font-size:8px;opacity:0.7;font-weight:600;}
+#edit-panel{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:10px 10px calc(10px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:42vh;flex-shrink:0;-webkit-overflow-scrolling:touch}
 .ep-row{display:flex;gap:8px;align-items:center}
 .ep-label{font-size:11px;color:var(--color-text-secondary);min-width:46px}
 
 
 input[type=text],textarea{
   width:100%;
-  border:1px solid rgba(0,0,0,0.1);
+  border:1px solid var(--color-border-tertiary);
   border-radius:10px;
   padding:10px 12px;
   font-size:16px;
-  background:#fff;
+  background:var(--color-background-secondary);
   color:var(--color-text-primary);
   box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);
+  -webkit-appearance:none;
+  appearance:none;
+}
+input[type=text]::placeholder,textarea::placeholder{
+  color:var(--color-text-secondary);
+  opacity:1;
+}
+input[type=text]:focus,textarea:focus{
+  outline:none;
+  border-color:#4f46e5;
+  box-shadow:0 0 0 2px rgba(79,70,229,0.15);
 }
 
 
-textarea{resize:none;min-height:44px}
+textarea{resize:none;min-height:44px;overflow:hidden;}
 .color-row{display:flex;gap:8px;flex-wrap:wrap}
-.color-swatch{width:32px;height:32px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.color-swatch{width:36px;height:36px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;-webkit-tap-highlight-color:transparent}
 .color-swatch.active{border-color:var(--color-text-primary)}
 #present-overlay{display:none;position:fixed;inset:0;z-index:9999;flex-direction:column}
 #present-overlay.show{display:flex}
@@ -57,7 +88,7 @@ textarea{resize:none;min-height:44px}
 #present-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:rgba(0,0,0,.3);flex-shrink:0}
 .pnav-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:12px 20px;font-size:18px;color:#fff;min-height:48px;min-width:48px;-webkit-tap-highlight-color:transparent}
 #present-counter{font-size:13px;color:rgba(255,255,255,.7)}
-#file-input,#file-input-2{display:none}
+#file-input,#file-input-2{display:none;position:absolute;width:1px;height:1px;opacity:0;}
 </style>
 
 <div id="app">
@@ -68,7 +99,7 @@ textarea{resize:none;min-height:44px}
     <button class="tb-btn" id="pdf-btn" onclick="exportPDF()">&#8595; PDF</button>
   </div>
   <div id="slide-area">
-    <div id="slide-preview" onclick="focusEdit()">
+    <div id="slide-preview">
       <div id="slide-canvas"></div>
     </div>
     <div id="thumbs-row"></div>
@@ -210,8 +241,12 @@ function renderSlide(slide,el,small,slideIdx){
       label.textContent = isPortrait ? 'Přidej foto autora' : 'Přidej fotografii';
       label.style.cssText = 'font-family:Inter,sans-serif;font-size:clamp(8px,1.6vw,12px);opacity:0.6;text-align:center;padding:0 8px;font-weight:400;';
       zone.appendChild(icon);zone.appendChild(label);
-      zone.addEventListener('click', e => { e.stopPropagation(); document.getElementById(inputId).click(); });
-      zone.addEventListener('touchend', e => { e.stopPropagation(); document.getElementById(inputId).click(); }, {passive:true});
+      // Use a <label> element linked to the file input — this is the only reliable way to trigger file picker on iOS/Android
+      const lbl = document.createElement('label');
+      lbl.htmlFor = inputId;
+      lbl.style.cssText = 'position:absolute;inset:0;cursor:pointer;z-index:3;-webkit-tap-highlight-color:transparent;';
+      lbl.setAttribute('aria-label', isPortrait ? 'Přidej foto autora' : 'Přidej fotografii');
+      zone.appendChild(lbl);
       el.appendChild(zone);
     } else if (slide.img && small) {
       const im = document.createElement('img');
@@ -359,10 +394,12 @@ function renderThumbs(){
 function syncInputs(){
   const s=slides[cur];
   document.getElementById('inp-title').value=s.title||'';
-  document.getElementById('inp-body').value=s.body||'';
+  const ta=document.getElementById('inp-body');
+  ta.value=s.body||'';
+  ta.style.height='auto';
+  ta.style.height=ta.scrollHeight+'px';
   const cidx=COLORS.findIndex(c=>c.bg===s.bg);
   document.querySelectorAll('.color-swatch').forEach((sw,j)=>sw.classList.toggle('active',j===cidx));
-
 }
 
 function render(){
@@ -374,6 +411,10 @@ function render(){
 function updateCurrent(){
   slides[cur].title=document.getElementById('inp-title').value;
   slides[cur].body=document.getElementById('inp-body').value;
+  // auto-grow textarea
+  const ta=document.getElementById('inp-body');
+  ta.style.height='auto';
+  ta.style.height=ta.scrollHeight+'px';
   render();
 }
 
@@ -555,3 +596,5 @@ async function exportPDF(){
   btn.textContent='↓ PDF';btn.disabled=false;
 }
 </script>
+</body>
+</html>
