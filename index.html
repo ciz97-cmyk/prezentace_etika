@@ -3,6 +3,14 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 <style>
+body{
+  overscroll-behavior: none;
+}
+
+#slide-preview{
+  touch-action: none;
+}
+
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font-sans);background:var(--color-background-tertiary);touch-action:manipulation}
 #app{display:flex;flex-direction:column;height:100vh;min-height:500px}
@@ -29,7 +37,20 @@ body{font-family:var(--font-sans);background:var(--color-background-tertiary);to
 #edit-panel{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:38vh;flex-shrink:0}
 .ep-row{display:flex;gap:8px;align-items:center}
 .ep-label{font-size:11px;color:var(--color-text-secondary);min-width:46px}
-input[type=text],textarea{width:100%;border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--color-background-secondary);color:var(--color-text-primary)}
+
+
+input[type=text],textarea{
+  width:100%;
+  border:1px solid rgba(0,0,0,0.1);
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:13px;
+  background:#fff;
+  color:var(--color-text-primary);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);
+}
+
+
 textarea{resize:none;min-height:44px}
 .color-row{display:flex;gap:5px;flex-wrap:wrap}
 .color-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0}
@@ -182,7 +203,7 @@ function renderSlide(slide,el,small,slideIdx){
   el.appendChild(tw);
 }
 
-function setupDrag(wrap,slide,handle){
+function setupDrag(wrap,slide,handle) {
   let dragging=false,resizing=false,startX=0,startY=0,origX=0,origY=0,origW=0,origH=0;
   const getPos=e=>e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY};
 
@@ -190,20 +211,8 @@ function setupDrag(wrap,slide,handle){
   wrap.addEventListener('touchstart',e=>{if(e.target===handle)return;dragging=true;const p=getPos(e);startX=p.x;startY=p.y;origX=slide.imgState.x;origY=slide.imgState.y;},{passive:true});
   handle.addEventListener('mousedown',e=>{resizing=true;const p=getPos(e);startX=p.x;startY=p.y;origW=slide.imgState.w;origH=slide.imgState.h;e.preventDefault();e.stopPropagation();});
   handle.addEventListener('touchstart',e=>{resizing=true;const p=getPos(e);startX=p.x;startY=p.y;origW=slide.imgState.w;origH=slide.imgState.h;e.stopPropagation();},{passive:true});
-
-  const onMove=e=>{
-    if(!dragging&&!resizing)return;
-    const p=e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY};
-    const dx=p.x-startX,dy=p.y-startY;
-    if(dragging){slide.imgState.x=Math.max(0,origX+dx);slide.imgState.y=Math.max(0,origY+dy);wrap.style.left=slide.imgState.x+'px';wrap.style.top=slide.imgState.y+'px';}
-    if(resizing){slide.imgState.w=Math.max(40,origW+dx);slide.imgState.h=Math.max(30,origH+dy);wrap.style.width=slide.imgState.w+'px';wrap.style.height=slide.imgState.h+'px';}
-  };
-  const onUp=()=>{dragging=false;resizing=false;};
-  document.addEventListener('mousemove',onMove);
-  document.addEventListener('touchmove',onMove,{passive:true});
-  document.addEventListener('mouseup',onUp);
-  document.addEventListener('touchend',onUp);
 }
+
 
 function renderThumbs(){
   const row=document.getElementById('thumbs-row');
