@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:var(--color-background-tertiary);touch-action:manipulation}
+#app{display:flex;flex-direction:column;height:100vh;min-height:500px}
+#toolbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:8px 10px;display:flex;align-items:center;gap:6px}
+.tb-btn{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--color-text-primary);cursor:pointer;white-space:nowrap;min-height:36px}
+.tb-btn.primary{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.tb-btn:active{opacity:.7}
+#slide-area{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:10px;gap:8px;min-height:0}
+#slide-preview{flex:1;border-radius:12px;overflow:hidden;position:relative;cursor:pointer;border:2px solid transparent;min-height:0}
+#slide-preview:hover{border-color:#4f46e5}
+#slide-canvas{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:16px;overflow:hidden;position:relative}
+#slide-canvas h1{font-size:clamp(13px,3vw,22px);font-weight:500;line-height:1.2;margin-bottom:5px;word-break:break-word;z-index:1;position:relative}
+#slide-canvas p{font-size:clamp(10px,2vw,14px);line-height:1.5;opacity:.85;word-break:break-word;white-space:pre-wrap;z-index:1;position:relative}
+.img-wrap{position:absolute;cursor:move;touch-action:none;user-select:none}
+.img-wrap img{display:block;width:100%;height:100%;object-fit:contain;border-radius:6px;pointer-events:none}
+.img-resize-handle{position:absolute;bottom:-6px;right:-6px;width:16px;height:16px;background:#4f46e5;border-radius:50%;cursor:nwse-resize;touch-action:none;z-index:10}
+#thumbs-row{display:flex;gap:6px;overflow-x:auto;padding:2px 0;flex-shrink:0;min-height:52px}
+#thumbs-row::-webkit-scrollbar{height:3px}
+#thumbs-row::-webkit-scrollbar-thumb{background:var(--color-border-secondary);border-radius:2px}
+.thumb{min-width:68px;height:48px;border-radius:6px;border:1.5px solid var(--color-border-tertiary);cursor:pointer;flex-shrink:0;overflow:hidden;position:relative}
+.thumb.active{border-color:#4f46e5;border-width:2px}
+.thumb .del{position:absolute;top:1px;right:2px;font-size:9px;color:#fff;background:rgba(0,0,0,.5);border-radius:3px;padding:0 3px;cursor:pointer;z-index:2;line-height:14px}
+.thumb .tnum{position:absolute;bottom:2px;left:3px;font-size:8px;opacity:.6}
+#edit-panel{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:10px;display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:38vh;flex-shrink:0}
+.ep-row{display:flex;gap:8px;align-items:center}
+.ep-label{font-size:11px;color:var(--color-text-secondary);min-width:46px}
+input[type=text],textarea{width:100%;border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:8px 10px;font-size:13px;background:var(--color-background-secondary);color:var(--color-text-primary)}
+textarea{resize:none;min-height:44px}
+.color-row{display:flex;gap:5px;flex-wrap:wrap}
+.color-swatch{width:26px;height:26px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0}
+.color-swatch.active{border-color:var(--color-text-primary)}
+.photo-preview{width:40px;height:30px;border-radius:6px;object-fit:cover;border:0.5px solid var(--color-border-secondary)}
+.photo-placeholder{width:40px;height:30px;border-radius:6px;border:0.5px dashed var(--color-border-secondary);display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--color-text-tertiary)}
+.rm-btn{font-size:11px;color:#e24b4a;cursor:pointer;padding:4px 8px;border:0.5px solid #e24b4a;border-radius:6px;min-height:32px}
+#present-overlay{display:none;position:fixed;inset:0;z-index:9999;flex-direction:column}
+#present-overlay.show{display:flex}
+#present-slide{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;overflow:hidden;position:relative}
+#present-slide h1{font-size:clamp(18px,5vw,44px);font-weight:500;line-height:1.15;margin-bottom:8px;position:relative;z-index:1}
+#present-slide p{font-size:clamp(12px,2.8vw,20px);line-height:1.55;opacity:.9;white-space:pre-wrap;position:relative;z-index:1}
+#present-slide .pimg-wrap{position:absolute;touch-action:none;user-select:none}
+#present-slide .pimg-wrap img{display:block;width:100%;height:100%;object-fit:contain;border-radius:10px;pointer-events:none}
+#present-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;background:rgba(0,0,0,.3);flex-shrink:0}
+.pnav-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:10px 18px;font-size:14px;color:#fff;cursor:pointer;min-height:40px}
+#present-counter{font-size:13px;color:rgba(255,255,255,.7)}
+#file-input{display:none}
+</style>
+
+<div id="app">
+  <div id="toolbar">
+    <button class="tb-btn" onclick="addSlide()">+ snímek</button>
+    <button class="tb-btn" onclick="duplicateSlide()">kopie</button>
+    <button class="tb-btn primary" onclick="startPresent()">&#9654; prezentuj</button>
+  </div>
+  <div id="slide-area">
+    <div id="slide-preview" onclick="focusEdit()">
+      <div id="slide-canvas"></div>
+    </div>
+    <div id="thumbs-row"></div>
+  </div>
+  <div id="edit-panel">
+    <div class="ep-row">
+      <span class="ep-label">Nadpis</span>
+      <input type="text" id="inp-title" placeholder="Hlavní nadpis" oninput="updateCurrent()">
+    </div>
+    <div class="ep-row">
+      <span class="ep-label">Text</span>
+      <textarea id="inp-body" placeholder="Popis / obsah snímku" oninput="updateCurrent()"></textarea>
+    </div>
+    <div class="ep-row">
+      <span class="ep-label">Fotka</span>
+      <div id="photo-row" style="display:flex;gap:8px;align-items:center"></div>
+    </div>
+    <div class="ep-row">
+      <span class="ep-label">Pozadí</span>
+      <div class="color-row" id="color-row"></div>
+    </div>
+  </div>
+</div>
+
+<div id="present-overlay">
+  <div id="present-slide"></div>
+  <div id="present-nav">
+    <button class="pnav-btn" onclick="presNav(-1)">&#8249;</button>
+    <span id="present-counter"></span>
+    <button class="pnav-btn" onclick="presNav(1)">&#8250;</button>
+    <button class="pnav-btn" onclick="endPresent()" style="margin-left:10px;font-size:12px;padding:10px 12px">&#10005;</button>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept="image/*">
+
+<script>
+const COLORS=[
+  {bg:'#1e1b4b',text:'#e0e7ff'},{bg:'#0f172a',text:'#e2e8f0'},
+  {bg:'#14532d',text:'#dcfce7'},{bg:'#7c2d12',text:'#ffedd5'},
+  {bg:'#831843',text:'#fce7f3'},{bg:'#1e3a5f',text:'#dbeafe'},
+  {bg:'#f8fafc',text:'#0f172a'},{bg:'#18181b',text:'#f4f4f5'},
+];
+
+let slides=[
+  {title:'Fotožurnalistika a etika',body:'Seminární prezentace',bg:'#1e1b4b',text:'#e0e7ff',img:null,imgState:{x:10,y:10,w:120,h:90}},
+  {title:'Fotografie',body:'Vlož fotografii z oblasti fotožurnalistiky, která je eticky diskutabilní.\n(např. Napalm Girl, The Falling Man, Vulture and the Little Girl, Tank Man, Alan Kurdi, Execution of Nguyễn Văn Lém)\n\nZdroj: Google — články a zpravodajství',bg:'#1e3a5f',text:'#dbeafe',img:null,imgState:{x:10,y:10,w:120,h:90}},
+  {title:'Kontext',body:'Co fotografie zachycuje?\n\nZa jakých okolností vznikla?',bg:'#14532d',text:'#dcfce7',img:null,imgState:{x:10,y:10,w:120,h:90}},
+  {title:'Význam a dopad',body:'Jaký měla fotografie vliv na veřejnost?\n\nVyvolala nějakou reakci?\n(diskuzi, změnu názoru, pomoc apod.)',bg:'#7c2d12',text:'#ffedd5',img:null,imgState:{x:10,y:10,w:120,h:90}},
+  {title:'Etické zhodnocení — vlastní názor',body:'Je podle tebe správné tuto fotografii zveřejnit? (ANO / NE)\n\nProč ano / proč ne? (min. 5 vět)\n\nJaké etické problémy fotografie vyvolává?\n(soukromí, důstojnost, manipulace, šokování veřejnosti…)',bg:'#831843',text:'#fce7f3',img:null,imgState:{x:10,y:10,w:120,h:90}},
+  {title:'Závěr',body:'Co je podle tebe fotožurnalistika?\n\nProč je důležitá etika při zveřejňování fotografií?\n\nMěla by mít média nějaké hranice? Jaké?',bg:'#18181b',text:'#f4f4f5',img:null,imgState:{x:10,y:10,w:120,h:90}},
+];
+
+let cur=0,presIdx=0;
+
+function buildColorRow(){
+  const row=document.getElementById('color-row');
+  row.innerHTML='';
+  COLORS.forEach((c,i)=>{
+    const s=document.createElement('div');
+    s.className='color-swatch';
+    s.style.background=c.bg;
+    s.onclick=()=>setColor(i);
+    row.appendChild(s);
+  });
+}
+
+function setColor(i){
+  slides[cur].bg=COLORS[i].bg;
+  slides[cur].text=COLORS[i].text;
+  document.querySelectorAll('.color-swatch').forEach((s,j)=>s.classList.toggle('active',j===i));
+  render();
+}
+
+function getTextAlign(slideIdx){
+  return slideIdx===0?'center':'left';
+}
+
+function renderSlide(slide,el,small,slideIdx){
+  el.style.background=slide.bg;
+  el.style.color=slide.text;
+  const align=getTextAlign(slideIdx);
+  el.style.alignItems=align==='center'?'center':'flex-start';
+  el.style.justifyContent='center';
+  el.innerHTML='';
+
+  if(slide.img&&!small){
+    const wrap=document.createElement('div');
+    wrap.className='img-wrap';
+    const st=slide.imgState;
+    wrap.style.cssText='left:'+st.x+'px;top:'+st.y+'px;width:'+st.w+'px;height:'+st.h+'px;position:absolute;cursor:move;touch-action:none;user-select:none';
+    const im=document.createElement('img');
+    im.src=slide.img;
+    im.style.cssText='display:block;width:100%;height:100%;object-fit:contain;border-radius:6px;pointer-events:none';
+    wrap.appendChild(im);
+    const handle=document.createElement('div');
+    handle.className='img-resize-handle';
+    wrap.appendChild(handle);
+    el.appendChild(wrap);
+    setupDrag(wrap,slide,handle);
+  } else if(slide.img&&small){
+    const im=document.createElement('img');
+    im.src=slide.img;
+    im.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.35;pointer-events:none';
+    el.appendChild(im);
+  }
+
+  const tw=document.createElement('div');
+  tw.style.cssText='position:relative;z-index:1;width:100%;text-align:'+align;
+  if(slide.title){
+    const h=document.createElement('h1');
+    h.textContent=slide.title;
+    if(small)h.style.fontSize='7px';
+    tw.appendChild(h);
+  }
+  if(slide.body){
+    const p=document.createElement('p');
+    p.textContent=slide.body;
+    if(small)p.style.fontSize='5.5px';
+    tw.appendChild(p);
+  }
+  el.appendChild(tw);
+}
+
+function setupDrag(wrap,slide,handle){
+  let dragging=false,resizing=false,startX=0,startY=0,origX=0,origY=0,origW=0,origH=0;
+  const getPos=e=>e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY};
+
+  wrap.addEventListener('mousedown',e=>{if(e.target===handle)return;dragging=true;const p=getPos(e);startX=p.x;startY=p.y;origX=slide.imgState.x;origY=slide.imgState.y;e.preventDefault();});
+  wrap.addEventListener('touchstart',e=>{if(e.target===handle)return;dragging=true;const p=getPos(e);startX=p.x;startY=p.y;origX=slide.imgState.x;origY=slide.imgState.y;},{passive:true});
+  handle.addEventListener('mousedown',e=>{resizing=true;const p=getPos(e);startX=p.x;startY=p.y;origW=slide.imgState.w;origH=slide.imgState.h;e.preventDefault();e.stopPropagation();});
+  handle.addEventListener('touchstart',e=>{resizing=true;const p=getPos(e);startX=p.x;startY=p.y;origW=slide.imgState.w;origH=slide.imgState.h;e.stopPropagation();},{passive:true});
+
+  const onMove=e=>{
+    if(!dragging&&!resizing)return;
+    const p=e.touches?{x:e.touches[0].clientX,y:e.touches[0].clientY}:{x:e.clientX,y:e.clientY};
+    const dx=p.x-startX,dy=p.y-startY;
+    if(dragging){slide.imgState.x=Math.max(0,origX+dx);slide.imgState.y=Math.max(0,origY+dy);wrap.style.left=slide.imgState.x+'px';wrap.style.top=slide.imgState.y+'px';}
+    if(resizing){slide.imgState.w=Math.max(40,origW+dx);slide.imgState.h=Math.max(30,origH+dy);wrap.style.width=slide.imgState.w+'px';wrap.style.height=slide.imgState.h+'px';}
+  };
+  const onUp=()=>{dragging=false;resizing=false;};
+  document.addEventListener('mousemove',onMove);
+  document.addEventListener('touchmove',onMove,{passive:true});
+  document.addEventListener('mouseup',onUp);
+  document.addEventListener('touchend',onUp);
+}
+
+function renderThumbs(){
+  const row=document.getElementById('thumbs-row');
+  row.innerHTML='';
+  slides.forEach((s,i)=>{
+    const t=document.createElement('div');
+    t.className='thumb'+(i===cur?' active':'');
+    t.style.background=s.bg;
+    if(s.img){
+      const ti=document.createElement('img');
+      ti.src=s.img;
+      ti.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.35';
+      t.appendChild(ti);
+    }
+    const mini=document.createElement('div');
+    mini.style.cssText='position:relative;z-index:1;padding:2px 4px;width:100%;text-align:'+(i===0?'center':'left');
+    if(s.title){
+      const h=document.createElement('div');
+      h.style.cssText='font-size:6px;font-weight:500;color:'+s.text+';word-break:break-word;overflow:hidden;max-height:24px';
+      h.textContent=s.title;
+      mini.appendChild(h);
+    }
+    t.appendChild(mini);
+    if(slides.length>1){
+      const del=document.createElement('div');
+      del.className='del';del.textContent='×';
+      del.onclick=e=>{e.stopPropagation();deleteSlide(i);};
+      t.appendChild(del);
+    }
+    const num=document.createElement('div');
+    num.className='tnum';num.style.color=s.text;num.textContent=i+1;
+    t.appendChild(num);
+    t.onclick=()=>selectSlide(i);
+    row.appendChild(t);
+  });
+}
+
+function renderPhotoRow(){
+  const row=document.getElementById('photo-row');
+  row.innerHTML='';
+  const s=slides[cur];
+  if(s.img){
+    const img=document.createElement('img');img.src=s.img;img.className='photo-preview';row.appendChild(img);
+    const rm=document.createElement('span');rm.className='rm-btn';rm.textContent='odebrat';
+    rm.onclick=()=>{slides[cur].img=null;render();};row.appendChild(rm);
+  } else {
+    const ph=document.createElement('div');ph.className='photo-placeholder';ph.textContent='🖼';row.appendChild(ph);
+    const btn=document.createElement('button');btn.className='tb-btn';btn.textContent='vybrat soubor';
+    btn.onclick=()=>document.getElementById('file-input').click();row.appendChild(btn);
+  }
+}
+
+function syncInputs(){
+  const s=slides[cur];
+  document.getElementById('inp-title').value=s.title||'';
+  document.getElementById('inp-body').value=s.body||'';
+  const cidx=COLORS.findIndex(c=>c.bg===s.bg);
+  document.querySelectorAll('.color-swatch').forEach((sw,j)=>sw.classList.toggle('active',j===cidx));
+  renderPhotoRow();
+}
+
+function render(){
+  renderSlide(slides[cur],document.getElementById('slide-canvas'),false,cur);
+  renderThumbs();
+  syncInputs();
+}
+
+function updateCurrent(){
+  slides[cur].title=document.getElementById('inp-title').value;
+  slides[cur].body=document.getElementById('inp-body').value;
+  render();
+}
+
+function selectSlide(i){cur=i;render();}
+function focusEdit(){document.getElementById('inp-title').focus();}
+
+function addSlide(){
+  const prev=slides[cur];
+  slides.splice(cur+1,0,{title:'Nový snímek',body:'',bg:prev.bg,text:prev.text,img:null,imgState:{x:10,y:10,w:120,h:90}});
+  cur++;render();
+}
+
+function duplicateSlide(){
+  const s=slides[cur];
+  slides.splice(cur+1,0,{...s,imgState:{...s.imgState}});
+  cur++;render();
+}
+
+function deleteSlide(i){
+  if(slides.length<=1)return;
+  slides.splice(i,1);
+  if(cur>=slides.length)cur=slides.length-1;
+  render();
+}
+
+document.getElementById('file-input').addEventListener('change',function(){
+  const file=this.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{slides[cur].img=e.target.result;slides[cur].imgState={x:10,y:10,w:140,h:110};render();};
+  reader.readAsDataURL(file);this.value='';
+});
+
+function startPresent(){presIdx=cur;renderPresent();document.getElementById('present-overlay').classList.add('show');}
+function endPresent(){document.getElementById('present-overlay').classList.remove('show');}
+function presNav(d){presIdx=Math.max(0,Math.min(slides.length-1,presIdx+d));renderPresent();}
+
+function renderPresent(){
+  const s=slides[presIdx];
+  const el=document.getElementById('present-slide');
+  el.style.background=s.bg;el.style.color=s.text;
+  const align=getTextAlign(presIdx);
+  el.style.alignItems=align==='center'?'center':'flex-start';
+  el.style.textAlign=align;
+  el.innerHTML='';
+  if(s.img){
+    const wrap=document.createElement('div');
+    wrap.className='pimg-wrap';
+    const prect=el.getBoundingClientRect();
+    const cw=document.getElementById('slide-canvas').offsetWidth||320;
+    const ch=document.getElementById('slide-canvas').offsetHeight||200;
+    const scaleX=prect.width/cw,scaleY=prect.height/ch;
+    const st=s.imgState;
+    wrap.style.cssText='left:'+(st.x*scaleX)+'px;top:'+(st.y*scaleY)+'px;width:'+(st.w*scaleX)+'px;height:'+(st.h*scaleY)+'px;position:absolute';
+    const im=document.createElement('img');im.src=s.img;
+    im.style.cssText='display:block;width:100%;height:100%;object-fit:contain;border-radius:10px;pointer-events:none';
+    wrap.appendChild(im);el.appendChild(wrap);
+  }
+  const tw=document.createElement('div');
+  tw.style.cssText='position:relative;z-index:1;width:100%;padding:0 8px;text-align:'+align;
+  if(s.title){const h=document.createElement('h1');h.textContent=s.title;tw.appendChild(h);}
+  if(s.body){const p=document.createElement('p');p.textContent=s.body;tw.appendChild(p);}
+  el.appendChild(tw);
+  document.getElementById('present-counter').textContent=(presIdx+1)+' / '+slides.length;
+}
+
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('present-overlay').classList.contains('show'))return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')presNav(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')presNav(-1);
+  if(e.key==='Escape')endPresent();
+});
+
+let txS=0;
+document.getElementById('present-slide').addEventListener('touchstart',e=>txS=e.touches[0].clientX,{passive:true});
+document.getElementById('present-slide').addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-txS;
+  if(Math.abs(dx)>40)presNav(dx<0?1:-1);
+},{passive:true});
+
+buildColorRow();render();
+</script>
