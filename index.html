@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Inter:wght@300;400;500;600&family=Crimson+Pro:ital,wght@0,300;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-background-primary:#ffffff;
+  --color-background-secondary:#f3f4f6;
+  --color-background-tertiary:#e5e7eb;
+  --color-border-tertiary:#d1d5db;
+  --color-border-secondary:#e5e7eb;
+  --color-text-primary:#111827;
+  --color-text-secondary:#6b7280;
+  --font-sans:'Inter',system-ui,-apple-system,sans-serif;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --color-background-primary:#1c1c1e;
+    --color-background-secondary:#2c2c2e;
+    --color-background-tertiary:#3a3a3c;
+    --color-border-tertiary:#48484a;
+    --color-border-secondary:#3a3a3c;
+    --color-text-primary:#f2f2f7;
+    --color-text-secondary:#aeaeb2;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:var(--color-background-tertiary);touch-action:manipulation;-webkit-text-size-adjust:100%;height:100dvh;overflow:hidden;overscroll-behavior:none;}
+#app{display:flex;flex-direction:column;height:100dvh;min-height:0;}
+#toolbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:8px 10px;padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right));display:flex;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0}
+#toolbar::-webkit-scrollbar{display:none}
+.tb-btn{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--color-text-primary);cursor:pointer;white-space:nowrap;min-height:44px;flex-shrink:0;-webkit-tap-highlight-color:transparent;font-family:var(--font-sans);}
+.tb-btn.primary{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.tb-btn:active{opacity:.7}
+#slide-area{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:10px;gap:8px;min-height:0;background:var(--color-background-tertiary);}
+#slide-preview{flex:1;border-radius:12px;overflow:hidden;position:relative;border:2px solid transparent;min-height:0}
+#slide-canvas{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:16px;overflow:hidden;position:relative;}
+#thumbs-row{display:flex;gap:4px;padding:2px 0;flex-shrink:0;min-height:52px;align-items:center;overflow:hidden;}
+.thumb{flex:1;min-width:0;height:46px;border-radius:6px;border:1.5px solid var(--color-border-tertiary);overflow:hidden;position:relative;-webkit-tap-highlight-color:transparent;cursor:pointer;}
+.thumb.active{border-color:#4f46e5;border-width:2px}
+.thumb .tnum{position:absolute;bottom:2px;left:3px;font-size:8px;opacity:0.7;font-weight:600;}
+#edit-panel{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:10px 10px calc(10px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px;overflow-y:auto;height:160px;flex-shrink:0;-webkit-overflow-scrolling:touch;transition:height 0.25s ease;}
+.ep-row{display:flex;gap:8px;align-items:flex-start;padding-top:2px;}
+.ep-label{font-size:11px;color:var(--color-text-secondary);min-width:46px;padding-top:12px;flex-shrink:0;}
+
+
+textarea{
+  width:100%;
+  border:1px solid var(--color-border-tertiary);
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:16px;
+  background:var(--color-background-secondary);
+  color:var(--color-text-primary);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);
+  -webkit-appearance:none;
+  appearance:none;
+  resize:none;
+  height:80px;
+  overflow-y:auto;
+}
+textarea::placeholder{
+  color:var(--color-text-secondary);
+  opacity:1;
+}
+textarea:focus{
+  outline:none;
+  border-color:#4f46e5;
+  box-shadow:0 0 0 2px rgba(79,70,229,0.15);
+}
+#edit-panel.expanded{height:280px;}
+.color-swatch{width:36px;height:36px;border-radius:50%;cursor:pointer;border:2px solid transparent;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.color-swatch.active{border-color:var(--color-text-primary)}
+#present-overlay{display:none;position:fixed;inset:0;z-index:9999;flex-direction:column}
+#present-overlay.show{display:flex}
+#present-slide{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;overflow:hidden;position:relative}
+#present-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom));background:rgba(0,0,0,.4);flex-shrink:0;}
+.pnav-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:12px 20px;font-size:18px;color:#fff;min-height:48px;min-width:48px;-webkit-tap-highlight-color:transparent}
+#present-counter{font-size:13px;color:rgba(255,255,255,.7)}
+#file-input,#file-input-2{display:none;width:1px;height:1px;opacity:0;}
+
+/* ── Responzivní – telefon (portrait) ── */
+@media(max-width:480px){
+  #toolbar{gap:4px;padding:6px 8px;}
+  .tb-btn{padding:7px 10px;font-size:12px;min-height:40px;}
+  #slide-area{padding:6px;gap:6px;}
+  #thumbs-row{min-height:46px;gap:3px;}
+  .thumb{height:40px;}
+  #edit-panel{height:150px;padding:8px 8px calc(8px + env(safe-area-inset-bottom));}
+  .ep-label{min-width:40px;font-size:10px;}
+  textarea{font-size:15px;padding:9px 10px;height:70px;}
+  .color-swatch{width:30px;height:30px;}
+}
+
+/* ── Velmi malé telefony ── */
+@media(max-width:360px){
+  .tb-btn{padding:6px 8px;font-size:11px;}
+  #edit-panel{height:140px;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="toolbar">
+    <button class="tb-btn primary" onclick="startPresent()">&#9654; prezentuj</button>
+    <button class="tb-btn" id="pdf-btn" onclick="exportPDF()">&#8595; PDF</button>
+  </div>
+  <div id="slide-area">
+    <div id="slide-preview">
+      <div id="slide-canvas"></div>
+    </div>
+    <div id="thumbs-row"></div>
+  </div>
+  <div id="edit-panel">
+    <div class="ep-row">
+      <span class="ep-label">Text</span>
+      <textarea id="inp-body" placeholder="Popis / obsah snímku" oninput="updateCurrent()"></textarea>
+    </div>
+
+    <div class="ep-row">
+      <span class="ep-label">Pozadí</span>
+      <div class="color-row" id="color-row"></div>
+    </div>
+  </div>
+</div>
+
+<div id="present-overlay">
+  <div id="present-slide"></div>
+  <div id="present-nav">
+    <button class="pnav-btn" onclick="presNav(-1)">&#8249;</button>
+    <span id="present-counter"></span>
+    <button class="pnav-btn" onclick="presNav(1)">&#8250;</button>
+    <button class="pnav-btn" onclick="endPresent()" style="margin-left:10px;font-size:12px;padding:10px 12px">&#10005;</button>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept="image/*">
+<input type="file" id="file-input-2" accept="image/*">
+
+<script>
+const COLORS=[
+  {bg:'#1e1b4b',text:'#e0e7ff'},{bg:'#0f172a',text:'#e2e8f0'},
+  {bg:'#14532d',text:'#dcfce7'},{bg:'#7c2d12',text:'#ffedd5'},
+  {bg:'#831843',text:'#fce7f3'},{bg:'#f8fafc',text:'#0f172a'},
+  {bg:'#18181b',text:'#f4f4f5'},
+];
+
+let slides=[
+  {title:'Fotografie',body:'Vlož fotografii z oblasti fotožurnalistiky, která je eticky diskutabilní.\n(např. Napalm Girl, The Falling Man, Vulture and the Little Girl, Tank Man, Alan Kurdi, Execution of Nguyễn Văn Lém)\n\nZdroj: Google — články a zpravodajství',bg:'#18181b',text:'#f4f4f5',img:null},
+  {title:'Autor fotografie',body:'Kdo fotografii pořídil?\n\nMěla jeho fotografie pozitivní nebo negativní dopad na jeho život?\n\nNějakou zajímavost o něm.',bg:'#18181b',text:'#f4f4f5',img:null},
+  {title:'Kontext',body:'Co fotografie zachycuje?\n\nZa jakých okolností vznikla?',bg:'#18181b',text:'#f4f4f5',img:null},
+  {title:'Význam a dopad',body:'Jaký měla fotografie vliv na veřejnost?\n\nVyvolala nějakou reakci?\n(diskuzi, změnu názoru, pomoc apod.)',bg:'#18181b',text:'#f4f4f5',img:null},
+  {title:'Etické zhodnocení — vlastní názor, ne názor od AI',body:'Je podle tebe správné tuto fotografii zveřejnit? (ANO / NE)\n\nProč ano / proč ne? (min. 5 vět)\n\nJaké etické problémy fotografie vyvolává?\n(soukromí, důstojnost, manipulace, šokování veřejnosti…)',bg:'#18181b',text:'#f4f4f5',img:null},
+  {title:'Závěr',body:'Proč je důležitá etika při zveřejňování fotografií?\n\nMělo by být i běžné fotografování mobilem nějak omezené? Pokud ano, jaké hranice by mělo mít?',bg:'#18181b',text:'#f4f4f5',img:null},
+];
+
+let cur=0,presIdx=0;
+
+function buildColorRow(){
+  const row=document.getElementById('color-row');
+  row.innerHTML='';
+  COLORS.forEach((c,i)=>{
+    const s=document.createElement('div');
+    s.className='color-swatch';
+    s.style.background=c.bg;
+    s.onclick=()=>setColor(i);
+    row.appendChild(s);
+  });
+}
+
+function setColor(i){
+  slides.forEach(s=>{s.bg=COLORS[i].bg;s.text=COLORS[i].text;});
+  document.querySelectorAll('.color-swatch').forEach((s,j)=>s.classList.toggle('active',j===i));
+  render();
+}
+
+function renderSlide(slide,el,small,slideIdx,forPDF=false){
+  el.style.background=slide.bg;
+  el.style.color=slide.text;
+  el.style.justifyContent='center';
+  el.style.alignItems='flex-start';
+  el.innerHTML='';
+
+  // ── THUMBNAIL ──────────────────────────────────
+  if(small){
+    if(slide.img){
+      const im=document.createElement('img');
+      im.src=slide.img;
+      im.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.22;pointer-events:none;';
+      el.appendChild(im);
+    }
+    const tw=document.createElement('div');
+    tw.style.cssText='position:relative;z-index:1;padding:4px 5px;width:100%;';
+    if(slide.title){
+      const h=document.createElement('div');
+      h.style.cssText=`font-size:5.5px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:${slide.text};overflow:hidden;max-height:13px;line-height:1.2;letter-spacing:-.01em;`;
+      h.textContent=slide.title;tw.appendChild(h);
+    }
+    if(slide.body){
+      const p=document.createElement('div');
+      p.style.cssText=`font-size:3.8px;opacity:.5;overflow:hidden;max-height:16px;white-space:nowrap;text-overflow:ellipsis;color:${slide.text};margin-top:1.5px;`;
+      p.textContent=slide.body.replace(/\n/g,' ');tw.appendChild(p);
+    }
+    el.appendChild(tw);
+    return;
+  }
+
+  // ── FULL SLIDE ─────────────────────────────────
+
+  // 1. Jemný šum / textura na pozadí
+  const noise=document.createElement('div');
+  noise.style.cssText=`
+    position:absolute;inset:0;pointer-events:none;z-index:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    opacity:1;mix-blend-mode:overlay;
+  `;
+  el.appendChild(noise);
+
+  // 2. Velké číslo snímku — dekorativní pozadí
+  const bgNum=document.createElement('div');
+  bgNum.style.cssText=`
+    position:absolute;right:-2%;bottom:-8%;
+    font-family:'Playfair Display',Georgia,serif;
+    font-size:clamp(60px,22vw,180px);
+    font-weight:900;line-height:1;
+    color:currentColor;opacity:0.055;
+    pointer-events:none;z-index:0;
+    user-select:none;letter-spacing:-.04em;
+  `;
+  bgNum.textContent=String(slideIdx+1).padStart(2,'0');
+  el.appendChild(bgNum);
+
+  // 3. Horní lišta — tenká čára přes celou šířku
+  const topBar=document.createElement('div');
+  topBar.style.cssText=`
+    position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(to right,rgba(255,255,255,0) 0%,rgba(255,255,255,0.4) 30%,rgba(255,255,255,0.4) 70%,rgba(255,255,255,0) 100%);
+    pointer-events:none;z-index:2;
+  `;
+  el.appendChild(topBar);
+
+  // 4. Číslo snímku — pravý horní roh, elegantní
+  const numEl=document.createElement('div');
+  numEl.style.cssText=`
+    position:absolute;top:clamp(7px,1.6vh,13px);right:clamp(10px,2.2vw,18px);
+    display:flex;align-items:center;gap:5px;
+    font-family:'Inter',sans-serif;font-size:clamp(6px,1vw,9px);
+    font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+    opacity:0.32;z-index:3;
+  `;
+  const numTick=document.createElement('div');
+  numTick.style.cssText='width:12px;height:1px;background:currentColor;opacity:.8;';
+  const numText=document.createElement('span');
+  numText.textContent=String(slideIdx+1).padStart(2,'0')+' / '+slides.length;
+  numEl.appendChild(numTick);numEl.appendChild(numText);
+  el.appendChild(numEl);
+
+  // 5. FOTO OBLAST (slide 0, 1)
+  if(slideIdx===0||slideIdx===1){
+    const inputId=slideIdx===1?'file-input-2':'file-input';
+    const isPortrait=slideIdx===1;
+    const isMobile=!forPDF&&window.innerWidth<500;
+    if(slide.img){
+      if(isMobile){
+        // Na mobilu: fotka jako fullscreen pozadí s průhledností
+        const bgImg=document.createElement('img');
+        bgImg.src=slide.img;
+        bgImg.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.28;pointer-events:none;user-select:none;z-index:0;';
+        el.appendChild(bgImg);
+        // Tmavý gradient přes fotku pro čitelnost textu
+        const grad=document.createElement('div');
+        grad.style.cssText='position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.15) 100%);pointer-events:none;z-index:0;';
+        el.appendChild(grad);
+      } else {
+        // Na desktopu: fotka jako boční panel
+        const wrap=document.createElement('div');
+        wrap.style.cssText=`
+          position:absolute;right:clamp(14px,4.5%,36px);top:50%;transform:translateY(-50%);
+          width:clamp(90px,36%,240px);aspect-ratio:${isPortrait?'3/4':'4/3'};
+          border-radius:4px;overflow:hidden;pointer-events:none;user-select:none;
+          box-shadow:0 16px 48px rgba(0,0,0,0.5),0 2px 8px rgba(0,0,0,0.3);
+          outline:1px solid rgba(255,255,255,0.12);z-index:2;
+        `;
+        const im=document.createElement('img');im.src=slide.img;
+        im.style.cssText='display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;';
+        wrap.appendChild(im);el.appendChild(wrap);
+      }
+    } else {
+      const zone=document.createElement('div');
+      zone.style.cssText=`
+        position:absolute;right:clamp(14px,4.5%,36px);top:50%;transform:translateY(-50%);
+        width:clamp(90px,36%,240px);aspect-ratio:${isPortrait?'3/4':'4/3'};
+        border:1px dashed rgba(255,255,255,0.18);border-radius:4px;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+        background:rgba(255,255,255,0.035);z-index:2;
+      `;
+      const icon=document.createElement('div');
+      icon.textContent=isPortrait?'🧑‍🎨':'📷';
+      icon.style.cssText='font-size:clamp(14px,2.8vw,22px);opacity:0.6;';
+      const lbl2=document.createElement('div');
+      lbl2.textContent=isPortrait?'Přidej foto autora':'Přidej fotografii';
+      lbl2.style.cssText='font-family:Inter,sans-serif;font-size:clamp(6px,1.1vw,10px);opacity:0.4;text-align:center;padding:0 6px;font-weight:500;letter-spacing:.03em;';
+      zone.appendChild(icon);zone.appendChild(lbl2);
+      const lbl=document.createElement('label');
+      lbl.htmlFor=inputId;
+      lbl.style.cssText='position:absolute;inset:0;cursor:pointer;z-index:3;-webkit-tap-highlight-color:transparent;';
+      zone.appendChild(lbl);el.appendChild(zone);
+    }
+  }
+
+  // 6. HLAVNÍ OBSAH
+  const hasPhoto=(slideIdx===0||slideIdx===1);
+  const isMobileLayout=!forPDF&&window.innerWidth<500;
+  const contentW=(hasPhoto&&!isMobileLayout)?'56%':'76%';
+  const leftPad='clamp(16px,5%,38px)';
+
+  const tw=document.createElement('div');
+  tw.style.cssText=`position:relative;z-index:1;width:${contentW};padding:0 0 0 ${leftPad};`;
+
+  // Kategoria — kódové označení
+  const cat=document.createElement('div');
+  cat.style.cssText=`
+    font-family:'Inter',sans-serif;
+    font-size:clamp(5px,.9vw,8px);font-weight:600;
+    letter-spacing:.22em;text-transform:uppercase;
+    opacity:0.3;margin-bottom:clamp(6px,1.4vh,12px);
+    display:flex;align-items:center;gap:6px;
+  `;
+  const catDash=document.createElement('span');catDash.textContent='—';
+  catDash.style.cssText='opacity:.5;font-size:.9em;letter-spacing:0;';
+  const catTxt=document.createElement('span');catTxt.textContent='Etika fotožurnalistiky';
+  cat.appendChild(catDash);cat.appendChild(catTxt);
+  tw.appendChild(cat);
+
+  // Nadpis
+  if(slide.title){
+    const h=document.createElement('div');
+    h.style.cssText=`
+      font-family:'Playfair Display',Georgia,serif;
+      font-size:clamp(12px,2.9vw,21px);font-weight:700;
+      line-height:1.14;margin-bottom:clamp(7px,1.4vh,13px);
+      letter-spacing:-.025em;
+    `;
+    h.textContent=slide.title;
+    tw.appendChild(h);
+  }
+
+  // Oddělovač — tenká linka s gradientem
+  const sep=document.createElement('div');
+  sep.style.cssText=`margin-bottom:clamp(8px,1.6vh,14px);`;
+  const sepLine=document.createElement('div');
+  sepLine.style.cssText=`height:1px;width:clamp(28px,6vw,50px);background:linear-gradient(to right,currentColor,rgba(255,255,255,0));opacity:0.25;`;
+  sep.appendChild(sepLine);tw.appendChild(sep);
+
+  // Text
+  if(slide.body){
+    const paras=slide.body.split(/\n\n+/);
+    paras.forEach((para,pi)=>{
+      if(!para.trim())return;
+      const firstLine=para.trim().split('\n')[0];
+      const isQ=firstLine.endsWith('?');
+      const pEl=document.createElement('div');
+      pEl.style.cssText=`
+        font-family:${isQ?"'Crimson Pro',Georgia,serif":"'Inter',sans-serif"};
+        font-size:${isQ?'clamp(9.5px,2vw,14.5px)':'clamp(8px,1.45vw,11px)'};
+        line-height:${isQ?'1.5':'1.72'};
+        font-weight:${isQ?'300':'300'};
+        font-style:${isQ?'italic':'normal'};
+        opacity:${isQ?'0.88':'0.65'};
+        margin-bottom:${pi<paras.length-1?'clamp(5px,1vh,9px)':'0'};
+        white-space:pre-wrap;
+        letter-spacing:${isQ?'.008em':'0'};
+      `;
+      pEl.textContent=para.trim();
+      tw.appendChild(pEl);
+    });
+  }
+
+  el.appendChild(tw);
+}
+
+
+
+function renderThumbs(){
+  const row=document.getElementById('thumbs-row');
+  row.innerHTML='';
+  slides.forEach((s,i)=>{
+    const t=document.createElement('div');
+    t.className='thumb'+(i===cur?' active':'');
+    t.style.cssText='display:flex;flex-direction:column;background:'+s.bg+';';
+    renderSlide(s,t,true,i);
+    const num=document.createElement('div');
+    num.className='tnum';num.style.color=s.text;num.textContent=i+1;
+    t.appendChild(num);
+    t.onclick=()=>selectSlide(i);
+    row.appendChild(t);
+  });
+}
+
+
+function syncInputs(){
+  const s=slides[cur];
+  const ta=document.getElementById('inp-body');
+  ta.value=s.body||'';
+  const cidx=COLORS.findIndex(c=>c.bg===s.bg);
+  document.querySelectorAll('.color-swatch').forEach((sw,j)=>sw.classList.toggle('active',j===cidx));
+}
+
+function render(){
+  renderSlide(slides[cur],document.getElementById('slide-canvas'),false,cur);
+  renderThumbs();
+  syncInputs();
+}
+
+function updateCurrent(){
+  slides[cur].body=document.getElementById('inp-body').value;
+  renderSlide(slides[cur],document.getElementById('slide-canvas'),false,cur);
+  renderThumbs();
+}
+
+function selectSlide(i){cur=i;render();}
+
+document.getElementById('file-input').addEventListener('change',function(){
+  const file=this.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{slides[0].img=e.target.result;render();};
+  reader.readAsDataURL(file);this.value='';
+});
+
+document.getElementById('file-input-2').addEventListener('change',function(){
+  const file=this.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{slides[1].img=e.target.result;render();};
+  reader.readAsDataURL(file);this.value='';
+});
+
+function startPresent(){presIdx=cur;renderPresent();document.getElementById('present-overlay').classList.add('show');}
+function endPresent(){document.getElementById('present-overlay').classList.remove('show');}
+function presNav(d){presIdx=Math.max(0,Math.min(slides.length-1,presIdx+d));renderPresent();}
+
+function renderPresent(){
+  const s=slides[presIdx];
+  const el=document.getElementById('present-slide');
+  el.style.background=s.bg;el.style.color=s.text;
+  el.style.alignItems='flex-start';
+  el.style.textAlign='left';
+  el.innerHTML='';
+
+  // Velké číslo na pozadí
+  const bgNum=document.createElement('div');
+  bgNum.style.cssText='position:absolute;right:-2%;bottom:-6%;font-family:"Playfair Display",Georgia,serif;font-size:clamp(120px,35vw,320px);font-weight:900;line-height:1;color:currentColor;opacity:0.05;pointer-events:none;z-index:0;user-select:none;letter-spacing:-.04em;';
+  bgNum.textContent=String(presIdx+1).padStart(2,'0');
+  el.appendChild(bgNum);
+
+  // Horní linka
+  const topBar=document.createElement('div');
+  topBar.style.cssText='position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,rgba(255,255,255,0) 0%,rgba(255,255,255,0.35) 30%,rgba(255,255,255,0.35) 70%,rgba(255,255,255,0) 100%);pointer-events:none;z-index:2;';
+  el.appendChild(topBar);
+
+  // Číslo snímku
+  const num=document.createElement('div');
+  num.style.cssText='position:absolute;top:22px;right:28px;display:flex;align-items:center;gap:6px;font-family:Inter,sans-serif;font-size:13px;font-weight:600;letter-spacing:.16em;opacity:0.25;z-index:2;text-transform:uppercase;';
+  const nTick=document.createElement('div');nTick.style.cssText='width:16px;height:1px;background:currentColor;';
+  const nTxt=document.createElement('span');nTxt.textContent=String(presIdx+1).padStart(2,'0')+' / '+slides.length;
+  num.appendChild(nTick);num.appendChild(nTxt);
+  el.appendChild(num);
+
+  // Foto
+  if(s.img&&(presIdx===0||presIdx===1)){
+    const isPortrait=presIdx===1;
+    const isMobile=window.innerWidth<500;
+    if(isMobile){
+      const bgImg=document.createElement('img');
+      bgImg.src=s.img;
+      bgImg.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.28;pointer-events:none;user-select:none;z-index:0;';
+      el.appendChild(bgImg);
+      const grad=document.createElement('div');
+      grad.style.cssText='position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.15) 100%);pointer-events:none;z-index:0;';
+      el.appendChild(grad);
+    } else {
+      const wrap=document.createElement('div');
+      wrap.style.cssText=`position:absolute;right:5%;top:50%;transform:translateY(-50%);width:36%;max-width:480px;aspect-ratio:${isPortrait?'3/4':'4/3'};pointer-events:none;border-radius:4px;overflow:hidden;box-shadow:0 24px 72px rgba(0,0,0,0.55),0 4px 16px rgba(0,0,0,0.3);outline:1px solid rgba(255,255,255,0.1);z-index:2;`;
+      const im=document.createElement('img');im.src=s.img;
+      im.style.cssText='display:block;width:100%;height:100%;object-fit:cover;pointer-events:none';
+      wrap.appendChild(im);el.appendChild(wrap);
+    }
+  }
+
+  const isMobilePresent=window.innerWidth<500;
+  const textW=((presIdx===0||presIdx===1)&&s.img&&!isMobilePresent)?'56%':'72%';
+  const tw=document.createElement('div');
+  tw.style.cssText=`position:relative;z-index:1;width:${textW};padding:0 0 0 8%;`;
+
+  // Kategoria
+  const cat=document.createElement('div');
+  cat.style.cssText='font-family:Inter,sans-serif;font-size:clamp(10px,1.2vw,14px);font-weight:600;letter-spacing:.22em;text-transform:uppercase;opacity:0.28;margin-bottom:clamp(10px,2vh,24px);display:flex;align-items:center;gap:8px;';
+  const cDash=document.createElement('span');cDash.textContent='—';cDash.style.cssText='opacity:.6;letter-spacing:0;';
+  const cTxt=document.createElement('span');cTxt.textContent='Etika fotožurnalistiky';
+  cat.appendChild(cDash);cat.appendChild(cTxt);tw.appendChild(cat);
+
+  if(s.title){
+    const h=document.createElement('div');
+    h.style.cssText='font-family:"Playfair Display",Georgia,serif;font-size:clamp(24px,5vw,58px);font-weight:700;line-height:1.08;margin-bottom:clamp(12px,2.2vh,28px);letter-spacing:-.025em;';
+    h.textContent=s.title;tw.appendChild(h);
+  }
+  const sep=document.createElement('div');
+  sep.style.cssText='margin-bottom:clamp(14px,2.6vh,32px);';
+  const sLine=document.createElement('div');
+  sLine.style.cssText='height:1px;width:clamp(32px,6vw,60px);background:linear-gradient(to right,currentColor,rgba(255,255,255,0));opacity:0.22;';
+  sep.appendChild(sLine);tw.appendChild(sep);
+
+  if(s.body){
+    const paras=s.body.split(/\n\n+/);
+    paras.forEach((para,pi)=>{
+      if(!para.trim())return;
+      const isQ=para.trim().split('\n')[0].endsWith('?');
+      const p=document.createElement('div');
+      p.style.cssText=`font-family:${isQ?'"Crimson Pro",Georgia,serif':'"Inter",sans-serif'};font-size:${isQ?'clamp(17px,2.8vw,32px)':'clamp(13px,2vw,22px)'};line-height:1.55;font-weight:300;font-style:${isQ?'italic':'normal'};opacity:${isQ?'.88':'.65'};margin-bottom:${pi<paras.length-1?'clamp(10px,1.8vh,22px)':'0'};white-space:pre-wrap;letter-spacing:${isQ?'.01em':'0'};`;
+      p.textContent=para.trim();tw.appendChild(p);
+    });
+  }
+  el.appendChild(tw);
+  document.getElementById('present-counter').textContent=(presIdx+1)+' / '+slides.length;
+}
+
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('present-overlay').classList.contains('show'))return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown')presNav(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp')presNav(-1);
+  if(e.key==='Escape')endPresent();
+});
+
+let txS=0;
+document.getElementById('present-slide').addEventListener('touchstart',e=>txS=e.touches[0].clientX,{passive:true});
+document.getElementById('present-slide').addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-txS;
+  if(Math.abs(dx)>40)presNav(dx<0?1:-1);
+},{passive:true});
+
+buildColorRow();render();
+
+const editPanel=document.getElementById('edit-panel');
+const textarea=document.getElementById('inp-body');
+
+textarea.addEventListener('focus',()=>{editPanel.classList.add('expanded');});
+textarea.addEventListener('blur',()=>{editPanel.classList.remove('expanded');});
+
+async function exportPDF(){
+  const btn=document.getElementById('pdf-btn');
+  btn.textContent='⏳ generuji…';btn.disabled=true;
+  try{
+    // Dynamicky načti knihovny
+    if(!window.html2canvas){
+      await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+    }
+    if(!window.jspdf){
+      await new Promise((res,rej)=>{const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';s.onload=res;s.onerror=rej;document.head.appendChild(s);});
+    }
+    const {jsPDF}=window.jspdf;
+    // A4 landscape
+    const pdf=new jsPDF({orientation:'landscape',unit:'px',format:[1122,794],hotfixes:['px_scaling']});
+    const W=1122,H=794;
+
+    // Dočasný kontejner pro renderování
+    const container=document.createElement('div');
+    container.style.cssText=`position:fixed;left:-9999px;top:0;width:${W}px;height:${H}px;overflow:hidden;`;
+    document.body.appendChild(container);
+
+    const savedCur=cur;
+    for(let i=0;i<slides.length;i++){
+      const canvas=document.createElement('div');
+      canvas.style.cssText=`width:${W}px;height:${H}px;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;overflow:hidden;position:relative;background:${slides[i].bg};color:${slides[i].text};`;
+      container.innerHTML='';
+      container.appendChild(canvas);
+      renderSlide(slides[i],canvas,false,i,true);
+      const imgData=await html2canvas(canvas,{scale:1,useCORS:true,backgroundColor:slides[i].bg,width:W,height:H,logging:false});
+      if(i>0)pdf.addPage();
+      pdf.addImage(imgData.toDataURL('image/jpeg',0.92),'JPEG',0,0,W,H);
+    }
+    document.body.removeChild(container);
+    cur=savedCur;
+    render();
+    pdf.save('prezentace.pdf');
+  }catch(err){
+    alert('Chyba při generování PDF: '+err.message);
+    console.error(err);
+  }
+  btn.textContent='↓ PDF';btn.disabled=false;
+}
+</script>
+</body>
+</html>
