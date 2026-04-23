@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,400&family=Inter:wght@300;400;500;600&family=Crimson+Pro:ital,wght@0,300;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --color-background-primary:#ffffff;
+  --color-background-secondary:#f3f4f6;
+  --color-background-tertiary:#e5e7eb;
+  --color-border-tertiary:#d1d5db;
+  --color-border-secondary:#e5e7eb;
+  --color-text-primary:#111827;
+  --color-text-secondary:#6b7280;
+  --font-sans:'Inter',system-ui,-apple-system,sans-serif;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --color-background-primary:#1c1c1e;
+    --color-background-secondary:#2c2c2e;
+    --color-background-tertiary:#3a3a3c;
+    --color-border-tertiary:#48484a;
+    --color-border-secondary:#3a3a3c;
+    --color-text-primary:#f2f2f7;
+    --color-text-secondary:#aeaeb2;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans);background:var(--color-background-tertiary);touch-action:manipulation;-webkit-text-size-adjust:100%;height:100dvh;overflow:hidden;overscroll-behavior:none;}
+#app{display:flex;flex-direction:column;height:100dvh;min-height:0;}
+#toolbar{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:8px 10px;padding-left:max(10px,env(safe-area-inset-left));padding-right:max(10px,env(safe-area-inset-right));display:flex;align-items:center;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;flex-shrink:0}
+#toolbar::-webkit-scrollbar{display:none}
+.tb-btn{background:var(--color-background-secondary);border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--color-text-primary);cursor:pointer;white-space:nowrap;min-height:44px;flex-shrink:0;-webkit-tap-highlight-color:transparent;font-family:var(--font-sans);}
+.tb-btn.primary{background:#4f46e5;color:#fff;border-color:#4f46e5}
+.tb-btn:active{opacity:.7}
+#slide-area{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:10px;gap:8px;min-height:0;background:var(--color-background-tertiary);}
+#slide-preview{flex:1;border-radius:12px;overflow:hidden;position:relative;border:2px solid transparent;min-height:0}
+#slide-canvas{width:100%;height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:16px;overflow:hidden;position:relative;}
+#thumbs-row{display:flex;gap:4px;padding:2px 0;flex-shrink:0;min-height:52px;align-items:center;overflow:hidden;}
+.thumb{flex:1;min-width:0;height:46px;border-radius:6px;border:1.5px solid var(--color-border-tertiary);overflow:hidden;position:relative;-webkit-tap-highlight-color:transparent;cursor:pointer;}
+.thumb.active{border-color:#4f46e5;border-width:2px}
+.thumb .tnum{position:absolute;bottom:2px;left:3px;font-size:8px;opacity:0.7;font-weight:600;}
+#edit-panel{background:var(--color-background-primary);border-top:0.5px solid var(--color-border-tertiary);padding:8px 10px calc(8px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px;flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.ep-row{display:flex;gap:8px;align-items:flex-start;padding-top:2px;flex:1;min-height:0;}
+.ep-label{font-size:11px;color:var(--color-text-secondary);min-width:46px;padding-top:12px;flex-shrink:0;}
+
+textarea{
+  width:100%;
+  border:1px solid var(--color-border-tertiary);
+  border-radius:10px;
+  padding:8px 12px;
+  font-size:16px;
+  background:var(--color-background-secondary);
+  color:var(--color-text-primary);
+  box-shadow:inset 0 1px 2px rgba(0,0,0,0.05);
+  -webkit-appearance:none;
+  appearance:none;
+  resize:none;
+  flex:1;
+  min-height:0;
+  height:100%;
+  overflow-y:auto;
+}
+textarea::placeholder{
+  color:var(--color-text-secondary);
+  opacity:1;
+}
+textarea:focus{
+  outline:none;
+  border-color:#4f46e5;
+  box-shadow:0 0 0 2px rgba(79,70,229,0.15);
+}
+
+#present-overlay{display:none;position:fixed;inset:0;z-index:9999;flex-direction:column}
+#present-overlay.show{display:flex}
+#present-slide{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;padding:24px;overflow:hidden;position:relative}
+#present-nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;padding-bottom:max(12px,env(safe-area-inset-bottom));background:rgba(0,0,0,.4);flex-shrink:0;}
+.pnav-btn{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.3);border-radius:8px;padding:12px 20px;font-size:18px;color:#fff;min-height:48px;min-width:48px;-webkit-tap-highlight-color:transparent;cursor:pointer;}
+#present-counter{font-size:13px;color:rgba(255,255,255,.7)}
+#file-input,#file-input-2{display:none;width:1px;height:1px;opacity:0;}
+
+/* ── Responzivní – telefon (portrait) ── */
+@media(max-width:480px){
+  #toolbar{gap:4px;padding:6px 8px;}
+  .tb-btn{padding:7px 10px;font-size:12px;min-height:40px;}
+  #slide-area{padding:6px;gap:6px;}
+  #thumbs-row{min-height:46px;gap:3px;}
+  .thumb{height:40px;}
+  #edit-panel{padding:6px 8px calc(6px + env(safe-area-inset-bottom));gap:4px;}
+  .ep-label{min-width:40px;font-size:10px;}
+  textarea{font-size:15px;padding:7px 10px;}
+}
+
+/* ── Velmi malé telefony ── */
+@media(max-width:360px){
+  .tb-btn{padding:6px 8px;font-size:11px;}
+}
+
+/* ── Prezentační overlay na mobilu ── */
+@media(max-width:480px){
+  #present-nav{padding:8px 12px;padding-bottom:max(8px,env(safe-area-inset-bottom));}
+  .pnav-btn{padding:10px 16px;font-size:16px;min-height:42px;min-width:42px;}
+  #present-slide{padding:16px;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="toolbar">
+    <button class="tb-btn primary" onclick="startPresent()">&#9654; prezentuj</button>
+    <button class="tb-btn" id="pdf-btn" onclick="exportPDF()">&#8595; PDF</button>
+  </div>
+  <div id="slide-area">
+    <div id="slide-preview">
+      <div id="slide-canvas"></div>
+    </div>
+    <div id="thumbs-row"></div>
+  </div>
+  <div id="edit-panel">
+    <div class="ep-row">
+      <span class="ep-label">Text</span>
+      <textarea id="inp-body" placeholder="Popis / obsah snímku" oninput="updateCurrent()"></textarea>
+    </div>
+  </div>
+</div>
+
+<div id="present-overlay">
+  <div id="present-slide"></div>
+  <div id="present-nav">
+    <button class="pnav-btn" onclick="presNav(-1)">&#8249;</button>
+    <span id="present-counter"></span>
+    <button class="pnav-btn" onclick="presNav(1)">&#8250;</button>
+    <button class="pnav-btn" onclick="endPresent()" style="margin-left:10px;font-size:12px;padding:10px 12px">&#10005;</button>
+  </div>
+</div>
+
+<input type="file" id="file-input" accept="image/*">
+<input type="file" id="file-input-2" accept="image/*">
+
+<script>
+// ── DATA ────────────────────────────────────────────────────────────────────
+let slides=[
+  {title:'Fotografie',body:'Vlož fotografii z oblasti fotožurnalistiky, která je eticky diskutabilní.\n(např. Napalm Girl, The Falling Man, Vulture and the Little Girl, Tank Man, Alan Kurdi, Execution of Nguyễn Văn Lém)\n\nZdroj: Google — články a zpravodajství',bg:'#18181b',text:'#f4f4f5',img:null},
+  {title:'Autor fotografie',body:'Kdo fotografii pořídil?\n\nMěla jeho fotografie pozitivní nebo negativní dopad na jeho život?\n\nNějakou zajímavost o něm.',bg:'#18181b',text:'#f4f4f5',img:null},
+  {title:'Kontext',body:'Co fotografie zachycuje?\n\nZa jakých okolností vznikla?',bg:'#18181b',text:'#f4f4f5',img:null},
+  {title:'Význam a dopad',body:'Jaký měla fotografie vliv na veřejnost?\n\nVyvolala nějakou reakci?\n(diskuzi, změnu názoru, pomoc apod.)',bg:'#18181b',text:'#f4f4f5',img:null},
+  {title:'Etické zhodnocení — vlastní názor, ne názor od AI',body:'Je podle tebe správné tuto fotografii zveřejnit? (ANO / NE)\n\nProč ano / proč ne? (min. 5 vět)\n\nJaké etické problémy fotografie vyvolává?\n(soukromí, důstojnost, manipulace, šokování veřejnosti…)',bg:'#18181b',text:'#f4f4f5',img:null},
+  {title:'Závěr',body:'Proč je důležitá etika při zveřejňování fotografií?\n\nMělo by být i běžné fotografování mobilem nějak omezené? Pokud ano, jaké hranice by mělo mít?',bg:'#18181b',text:'#f4f4f5',img:null},
+];
+
+let cur=0, presIdx=0;
+
+// ── RENDER SLIDE ─────────────────────────────────────────────────────────────
+function renderSlide(slide, el, small, slideIdx, forPDF=false){
+  el.style.background=slide.bg;
+  el.style.color=slide.text;
+  el.style.justifyContent='flex-start';
+  el.style.alignItems='flex-start';
+  el.innerHTML='';
+
+  // ── THUMBNAIL ──────────────────────────────────
+  if(small){
+    if(slide.img){
+      const im=document.createElement('img');
+      im.src=slide.img;
+      im.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.22;pointer-events:none;';
+      el.appendChild(im);
+    }
+    const tw=document.createElement('div');
+    tw.style.cssText='position:relative;z-index:1;padding:4px 5px;width:100%;';
+    if(slide.title){
+      const h=document.createElement('div');
+      h.style.cssText=`font-size:5.5px;font-weight:700;font-family:'Playfair Display',Georgia,serif;color:${slide.text};overflow:hidden;max-height:13px;line-height:1.2;letter-spacing:-.01em;`;
+      h.textContent=slide.title;tw.appendChild(h);
+    }
+    if(slide.body){
+      const p=document.createElement('div');
+      p.style.cssText=`font-size:3.8px;opacity:.5;overflow:hidden;max-height:16px;white-space:nowrap;text-overflow:ellipsis;color:${slide.text};margin-top:1.5px;`;
+      p.textContent=slide.body.replace(/\n/g,' ');tw.appendChild(p);
+    }
+    el.appendChild(tw);
+    return;
+  }
+
+  // ── FULL SLIDE ─────────────────────────────────
+
+  // 1. Jemný šum / textura na pozadí
+  const noise=document.createElement('div');
+  noise.style.cssText=`
+    position:absolute;inset:0;pointer-events:none;z-index:0;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+    opacity:1;mix-blend-mode:overlay;
+  `;
+  el.appendChild(noise);
+
+  // 2. Velké číslo snímku — dekorativní pozadí
+  const bgNum=document.createElement('div');
+  bgNum.style.cssText=`
+    position:absolute;right:-2%;bottom:-8%;
+    font-family:'Playfair Display',Georgia,serif;
+    font-size:clamp(60px,22vw,180px);
+    font-weight:900;line-height:1;
+    color:currentColor;opacity:0.055;
+    pointer-events:none;z-index:0;
+    user-select:none;letter-spacing:-.04em;
+  `;
+  bgNum.textContent=String(slideIdx+1).padStart(2,'0');
+  el.appendChild(bgNum);
+
+  // 3. Horní lišta
+  const topBar=document.createElement('div');
+  topBar.style.cssText=`
+    position:absolute;top:0;left:0;right:0;height:2px;
+    background:linear-gradient(to right,rgba(255,255,255,0) 0%,rgba(255,255,255,0.4) 30%,rgba(255,255,255,0.4) 70%,rgba(255,255,255,0) 100%);
+    pointer-events:none;z-index:2;
+  `;
+  el.appendChild(topBar);
+
+  // 4. Číslo snímku — pravý horní roh
+  const numEl=document.createElement('div');
+  numEl.style.cssText=`
+    position:absolute;top:clamp(7px,1.6vh,13px);right:clamp(10px,2.2vw,18px);
+    display:flex;align-items:center;gap:5px;
+    font-family:'Inter',sans-serif;font-size:clamp(6px,1vw,9px);
+    font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+    opacity:0.32;z-index:3;
+  `;
+  const numTick=document.createElement('div');
+  numTick.style.cssText='width:12px;height:1px;background:currentColor;opacity:.8;';
+  const numText=document.createElement('span');
+  numText.textContent=String(slideIdx+1).padStart(2,'0')+' / '+slides.length;
+  numEl.appendChild(numTick);numEl.appendChild(numText);
+  el.appendChild(numEl);
+
+  // 5. FOTO OBLAST (slide 0, 1)
+  if(slideIdx===0||slideIdx===1){
+    const inputId=slideIdx===1?'file-input-2':'file-input';
+    const isPortrait=slideIdx===1;
+    const isMobile=!forPDF&&window.innerWidth<500;
+
+    if(slide.img){
+      if(isMobile){
+        // Mobil: fotka jako fullscreen pozadí
+        const bgImg=document.createElement('img');
+        bgImg.src=slide.img;
+        bgImg.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.28;pointer-events:none;user-select:none;z-index:0;';
+        el.appendChild(bgImg);
+        const grad=document.createElement('div');
+        grad.style.cssText='position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.15) 100%);pointer-events:none;z-index:0;';
+        el.appendChild(grad);
+      } else {
+        // Desktop: fotka jako boční panel
+        const wrap=document.createElement('div');
+        wrap.style.cssText=`
+          position:absolute;right:clamp(14px,4.5%,36px);top:50%;transform:translateY(-50%);
+          width:clamp(90px,36%,240px);aspect-ratio:${isPortrait?'3/4':'4/3'};
+          border-radius:4px;overflow:hidden;pointer-events:none;user-select:none;
+          box-shadow:0 16px 48px rgba(0,0,0,0.5),0 2px 8px rgba(0,0,0,0.3);
+          outline:1px solid rgba(255,255,255,0.12);z-index:2;
+        `;
+        const im=document.createElement('img');im.src=slide.img;
+        im.style.cssText='display:block;width:100%;height:100%;object-fit:cover;pointer-events:none;';
+        wrap.appendChild(im);el.appendChild(wrap);
+      }
+    } else {
+      // BUG FIX: upload zóna jen na desktopu — na mobilu by překrývala obsah bez možnosti kliknutí
+      if(!isMobile){
+        const zone=document.createElement('div');
+        zone.style.cssText=`
+          position:absolute;right:clamp(14px,4.5%,36px);top:50%;transform:translateY(-50%);
+          width:clamp(90px,36%,240px);aspect-ratio:${isPortrait?'3/4':'4/3'};
+          border:1px dashed rgba(255,255,255,0.18);border-radius:4px;
+          display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+          background:rgba(255,255,255,0.035);z-index:2;
+        `;
+        const icon=document.createElement('div');
+        icon.textContent=isPortrait?'🧑‍🎨':'📷';
+        icon.style.cssText='font-size:clamp(14px,2.8vw,22px);opacity:0.6;';
+        const lbl2=document.createElement('div');
+        lbl2.textContent=isPortrait?'Přidej foto autora':'Přidej fotografii';
+        lbl2.style.cssText='font-family:Inter,sans-serif;font-size:clamp(6px,1.1vw,10px);opacity:0.4;text-align:center;padding:0 6px;font-weight:500;letter-spacing:.03em;';
+        zone.appendChild(icon);zone.appendChild(lbl2);
+        const lbl=document.createElement('label');
+        lbl.htmlFor=inputId;
+        lbl.style.cssText='position:absolute;inset:0;cursor:pointer;z-index:3;-webkit-tap-highlight-color:transparent;';
+        zone.appendChild(lbl);el.appendChild(zone);
+      } else {
+        // Mobil bez fotky: malá ikona pro nahrání v rohu
+        const uploadBtn=document.createElement('label');
+        uploadBtn.htmlFor=inputId;
+        uploadBtn.style.cssText='position:absolute;bottom:10px;right:10px;z-index:3;background:rgba(255,255,255,0.12);border:1px dashed rgba(255,255,255,0.3);border-radius:8px;padding:6px 10px;font-size:10px;color:currentColor;opacity:0.6;cursor:pointer;display:flex;align-items:center;gap:5px;-webkit-tap-highlight-color:transparent;';
+        uploadBtn.innerHTML=`<span>${isPortrait?'🧑‍🎨':'📷'}</span><span style="font-family:Inter,sans-serif;letter-spacing:.02em;">${isPortrait?'Foto autora':'Přidej foto'}</span>`;
+        el.appendChild(uploadBtn);
+      }
+    }
+  }
+
+  // 6. HLAVNÍ OBSAH
+  const hasPhoto=(slideIdx===0||slideIdx===1);
+  const isMobileLayout=!forPDF&&window.innerWidth<500;
+  const contentW=(hasPhoto&&!isMobileLayout)?'56%':'76%';
+  const leftPad='clamp(16px,5%,38px)';
+  const topPos='clamp(18px,8%,42px)';
+
+  const tw=document.createElement('div');
+  tw.style.cssText=`position:absolute;z-index:1;top:${topPos};left:0;width:${contentW};padding:0 0 0 ${leftPad};overflow:hidden;`;
+
+  // Kategorie
+  const cat=document.createElement('div');
+  cat.style.cssText=`
+    font-family:'Inter',sans-serif;
+    font-size:clamp(5px,.9vw,8px);font-weight:600;
+    letter-spacing:.22em;text-transform:uppercase;
+    opacity:0.3;margin-bottom:clamp(6px,1.4vh,12px);
+    display:flex;align-items:center;gap:6px;
+  `;
+  const catDash=document.createElement('span');catDash.textContent='—';
+  catDash.style.cssText='opacity:.5;font-size:.9em;letter-spacing:0;';
+  const catTxt=document.createElement('span');catTxt.textContent='Etika fotožurnalistiky';
+  cat.appendChild(catDash);cat.appendChild(catTxt);
+  tw.appendChild(cat);
+
+  // Nadpis
+  if(slide.title){
+    const h=document.createElement('div');
+    h.style.cssText=`
+      font-family:'Playfair Display',Georgia,serif;
+      font-size:clamp(12px,2.9vw,21px);font-weight:700;
+      line-height:1.14;margin-bottom:clamp(7px,1.4vh,13px);
+      letter-spacing:-.025em;
+    `;
+    h.textContent=slide.title;
+    tw.appendChild(h);
+  }
+
+  // Oddělovač
+  const sep=document.createElement('div');
+  sep.style.cssText=`margin-bottom:clamp(8px,1.6vh,14px);`;
+  const sepLine=document.createElement('div');
+  sepLine.style.cssText=`height:1px;width:clamp(28px,6vw,50px);background:linear-gradient(to right,currentColor,rgba(255,255,255,0));opacity:0.25;`;
+  sep.appendChild(sepLine);tw.appendChild(sep);
+
+  // Text
+  if(slide.body){
+    const paras=slide.body.split(/\n\n+/);
+    paras.forEach((para,pi)=>{
+      if(!para.trim())return;
+      const firstLine=para.trim().split('\n')[0];
+      const isQ=firstLine.endsWith('?');
+      const pEl=document.createElement('div');
+      pEl.style.cssText=`
+        font-family:${isQ?"'Crimson Pro',Georgia,serif":"'Inter',sans-serif"};
+        font-size:${isQ?'clamp(9.5px,2vw,14.5px)':'clamp(8px,1.45vw,11px)'};
+        line-height:${isQ?'1.5':'1.72'};
+        font-weight:300;
+        font-style:${isQ?'italic':'normal'};
+        opacity:${isQ?'0.88':'0.65'};
+        margin-bottom:${pi<paras.length-1?'clamp(5px,1vh,9px)':'0'};
+        white-space:pre-wrap;
+        letter-spacing:${isQ?'.008em':'0'};
+      `;
+      pEl.textContent=para.trim();
+      tw.appendChild(pEl);
+    });
+  }
+
+  el.appendChild(tw);
+}
+
+// ── THUMBS ───────────────────────────────────────────────────────────────────
+function renderThumbs(){
+  const row=document.getElementById('thumbs-row');
+  row.innerHTML='';
+  slides.forEach((s,i)=>{
+    const t=document.createElement('div');
+    t.className='thumb'+(i===cur?' active':'');
+    t.style.cssText='display:flex;flex-direction:column;background:'+s.bg+';';
+    renderSlide(s,t,true,i);
+    const num=document.createElement('div');
+    num.className='tnum';num.style.color=s.text;num.textContent=i+1;
+    t.appendChild(num);
+    t.onclick=()=>selectSlide(i);
+    row.appendChild(t);
+  });
+}
+
+// ── SYNC + RENDER ─────────────────────────────────────────────────────────────
+function syncInputs(){
+  const s=slides[cur];
+  document.getElementById('inp-body').value=s.body||'';
+}
+
+function render(){
+  renderSlide(slides[cur],document.getElementById('slide-canvas'),false,cur);
+  renderThumbs();
+  syncInputs();
+}
+
+function updateCurrent(){
+  slides[cur].body=document.getElementById('inp-body').value;
+  renderSlide(slides[cur],document.getElementById('slide-canvas'),false,cur);
+  renderThumbs();
+}
+
+function selectSlide(i){cur=i;render();}
+
+// ── FILE UPLOAD ───────────────────────────────────────────────────────────────
+document.getElementById('file-input').addEventListener('change',function(){
+  const file=this.files[0];if(!file)return;
+  // BUG FIX: validace — pouze obrázky
+  if(!file.type.startsWith('image/')){alert('Vyber prosím obrázek.');this.value='';return;}
+  const reader=new FileReader();
+  reader.onload=e=>{slides[0].img=e.target.result;render();};
+  reader.onerror=()=>{alert('Nepodařilo se načíst obrázek.');};
+  reader.readAsDataURL(file);
+  this.value='';
+});
+
+document.getElementById('file-input-2').addEventListener('change',function(){
+  const file=this.files[0];if(!file)return;
+  if(!file.type.startsWith('image/')){alert('Vyber prosím obrázek.');this.value='';return;}
+  const reader=new FileReader();
+  reader.onload=e=>{slides[1].img=e.target.result;render();};
+  reader.onerror=()=>{alert('Nepodařilo se načíst obrázek.');};
+  reader.readAsDataURL(file);
+  this.value='';
+});
+
+// ── PREZENTACE ────────────────────────────────────────────────────────────────
+function startPresent(){presIdx=cur;renderPresent();document.getElementById('present-overlay').classList.add('show');}
+function endPresent(){document.getElementById('present-overlay').classList.remove('show');}
+function presNav(d){
+  presIdx=Math.max(0,Math.min(slides.length-1,presIdx+d));
+  renderPresent();
+}
+
+function renderPresent(){
+  const s=slides[presIdx];
+  const el=document.getElementById('present-slide');
+  el.style.background=s.bg;
+  el.style.color=s.text;
+  el.style.textAlign='left';
+  el.innerHTML='';
+
+  // Velké číslo na pozadí
+  const bgNum=document.createElement('div');
+  bgNum.style.cssText='position:absolute;right:-2%;bottom:-6%;font-family:"Playfair Display",Georgia,serif;font-size:clamp(120px,35vw,320px);font-weight:900;line-height:1;color:currentColor;opacity:0.05;pointer-events:none;z-index:0;user-select:none;letter-spacing:-.04em;';
+  bgNum.textContent=String(presIdx+1).padStart(2,'0');
+  el.appendChild(bgNum);
+
+  // Horní linka
+  const topBar=document.createElement('div');
+  topBar.style.cssText='position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(to right,rgba(255,255,255,0) 0%,rgba(255,255,255,0.35) 30%,rgba(255,255,255,0.35) 70%,rgba(255,255,255,0) 100%);pointer-events:none;z-index:2;';
+  el.appendChild(topBar);
+
+  // Číslo snímku
+  const num=document.createElement('div');
+  num.style.cssText='position:absolute;top:22px;right:28px;display:flex;align-items:center;gap:6px;font-family:Inter,sans-serif;font-size:13px;font-weight:600;letter-spacing:.16em;opacity:0.25;z-index:2;text-transform:uppercase;';
+  const nTick=document.createElement('div');nTick.style.cssText='width:16px;height:1px;background:currentColor;';
+  const nTxt=document.createElement('span');nTxt.textContent=String(presIdx+1).padStart(2,'0')+' / '+slides.length;
+  num.appendChild(nTick);num.appendChild(nTxt);
+  el.appendChild(num);
+
+  // Foto
+  if(s.img&&(presIdx===0||presIdx===1)){
+    const isPortrait=presIdx===1;
+    const isMobile=window.innerWidth<500;
+    if(isMobile){
+      const bgImg=document.createElement('img');
+      bgImg.src=s.img;
+      bgImg.style.cssText='position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.28;pointer-events:none;user-select:none;z-index:0;';
+      el.appendChild(bgImg);
+      const grad=document.createElement('div');
+      grad.style.cssText='position:absolute;inset:0;background:linear-gradient(to right,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.15) 100%);pointer-events:none;z-index:0;';
+      el.appendChild(grad);
+    } else {
+      const wrap=document.createElement('div');
+      wrap.style.cssText=`position:absolute;right:5%;top:50%;transform:translateY(-50%);width:36%;max-width:480px;aspect-ratio:${isPortrait?'3/4':'4/3'};pointer-events:none;border-radius:4px;overflow:hidden;box-shadow:0 24px 72px rgba(0,0,0,0.55),0 4px 16px rgba(0,0,0,0.3);outline:1px solid rgba(255,255,255,0.1);z-index:2;`;
+      const im=document.createElement('img');im.src=s.img;
+      im.style.cssText='display:block;width:100%;height:100%;object-fit:cover;pointer-events:none';
+      wrap.appendChild(im);el.appendChild(wrap);
+    }
+  }
+
+  const isMobilePresent=window.innerWidth<500;
+  const textW=((presIdx===0||presIdx===1)&&s.img&&!isMobilePresent)?'56%':'72%';
+  const tw=document.createElement('div');
+  tw.style.cssText=`position:absolute;z-index:1;top:clamp(28px,7%,60px);left:0;width:${textW};padding:0 0 0 8%;overflow:hidden;`;
+
+  // Kategorie
+  const cat=document.createElement('div');
+  cat.style.cssText='font-family:Inter,sans-serif;font-size:clamp(8px,1.2vw,14px);font-weight:600;letter-spacing:.22em;text-transform:uppercase;opacity:0.28;margin-bottom:clamp(6px,1.6vh,24px);display:flex;align-items:center;gap:8px;';
+  const cDash=document.createElement('span');cDash.textContent='—';cDash.style.cssText='opacity:.6;letter-spacing:0;';
+  const cTxt=document.createElement('span');cTxt.textContent='Etika fotožurnalistiky';
+  cat.appendChild(cDash);cat.appendChild(cTxt);tw.appendChild(cat);
+
+  if(s.title){
+    const h=document.createElement('div');
+    h.style.cssText='font-family:"Playfair Display",Georgia,serif;font-size:clamp(18px,5vw,58px);font-weight:700;line-height:1.1;margin-bottom:clamp(8px,2vh,28px);letter-spacing:-.025em;';
+    h.textContent=s.title;tw.appendChild(h);
+  }
+  const sep=document.createElement('div');
+  sep.style.cssText='margin-bottom:clamp(8px,2vh,32px);';
+  const sLine=document.createElement('div');
+  sLine.style.cssText='height:1px;width:clamp(32px,6vw,60px);background:linear-gradient(to right,currentColor,rgba(255,255,255,0));opacity:0.22;';
+  sep.appendChild(sLine);tw.appendChild(sep);
+
+  if(s.body){
+    const paras=s.body.split(/\n\n+/);
+    paras.forEach((para,pi)=>{
+      if(!para.trim())return;
+      const isQ=para.trim().split('\n')[0].endsWith('?');
+      const p=document.createElement('div');
+      p.style.cssText=`font-family:${isQ?'"Crimson Pro",Georgia,serif':'"Inter",sans-serif'};font-size:${isQ?'clamp(13px,2.8vw,32px)':'clamp(11px,2vw,22px)'};line-height:1.55;font-weight:300;font-style:${isQ?'italic':'normal'};opacity:${isQ?'.88':'.65'};margin-bottom:${pi<paras.length-1?'clamp(6px,1.6vh,22px)':'0'};white-space:pre-wrap;letter-spacing:${isQ?'.01em':'0'};`;
+      p.textContent=para.trim();tw.appendChild(p);
+    });
+  }
+  el.appendChild(tw);
+  document.getElementById('present-counter').textContent=(presIdx+1)+' / '+slides.length;
+}
+
+// ── KLÁVESNICE ────────────────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if(!document.getElementById('present-overlay').classList.contains('show'))return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown'){e.preventDefault();presNav(1);}
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp'){e.preventDefault();presNav(-1);}
+  if(e.key==='Escape')endPresent();
+});
+
+// ── SWIPE (BUG FIX: správná inicializace, minimální pohyb Y pro zamezení false swipe) ──
+let txS=null, tyS=null;
+document.getElementById('present-slide').addEventListener('touchstart',e=>{
+  txS=e.touches[0].clientX;
+  tyS=e.touches[0].clientY;
+},{passive:true});
+document.getElementById('present-slide').addEventListener('touchend',e=>{
+  if(txS===null)return;
+  const dx=e.changedTouches[0].clientX-txS;
+  const dy=e.changedTouches[0].clientY-tyS;
+  // BUG FIX: ignoruj swipe pokud vertikální pohyb převyšuje horizontální (scroll)
+  // BUG FIX: větší threshold (60px) pro spolehlivější rozpoznání záměrného swipe
+  if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5){
+    presNav(dx<0?1:-1);
+  }
+  txS=null;tyS=null;
+},{passive:true});
+
+// ── PDF EXPORT — bez externích knihoven, čisté Canvas + ruční PDF ─────────────
+async function exportPDF(){
+  const btn=document.getElementById('pdf-btn');
+  btn.textContent='⏳ generuji…';btn.disabled=true;
+  try{
+    const W=1122,H=794;
+    const jpegPages=[];
+
+    for(let i=0;i<slides.length;i++){
+      const dataUrl=await renderSlideToCanvas(slides[i],i,W,H);
+      jpegPages.push(dataUrl);
+    }
+
+    // Sestav PDF ručně — každá stránka je jeden JPEG XObject
+    const pdfBytes=buildPDF(jpegPages,W,H);
+    const blob=new Blob([pdfBytes],{type:'application/pdf'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;a.download='prezentace.pdf';
+    document.body.appendChild(a);a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),5000);
+  }catch(err){
+    alert('Chyba při generování PDF: '+err.message);
+    console.error(err);
+  }finally{
+    btn.textContent='↓ PDF';
+    btn.disabled=false;
+  }
+}
+
+// Sestaví minimální validní PDF se stránkami jako JPEG
+function buildPDF(dataUrls,W,H){
+  // Převeď dataURL na raw bytes
+  const pages=dataUrls.map(url=>{
+    const b64=url.split(',')[1];
+    const bin=atob(b64);
+    const bytes=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+    return bytes;
+  });
+
+  const enc=new TextEncoder();
+  const parts=[];
+  const offsets=[];
+
+  function push(str){parts.push(enc.encode(str));}
+  function pushBytes(b){parts.push(b);}
+  function byteLength(){return parts.reduce((s,p)=>s+p.length,0);}
+
+  // Header
+  push('%PDF-1.4\n%\xff\xff\xff\xff\n');
+
+  const n=pages.length;
+  // Object numbering: 1=catalog, 2=pages, 3..2+n=page objs, 3+n..2+2n=xobj images
+  const catId=1,pagesId=2;
+  const pageIds=pages.map((_,i)=>3+i);
+  const imgIds=pages.map((_,i)=>3+n+i);
+
+  // Image XObjects
+  imgIds.forEach((id,i)=>{
+    offsets[id]=byteLength();
+    push(`${id} 0 obj\n<< /Type /XObject /Subtype /Image /Width ${W} /Height ${H} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${pages[i].length} >>\nstream\n`);
+    pushBytes(pages[i]);
+    push('\nendstream\nendobj\n');
+  });
+
+  // Page objects
+  pageIds.forEach((id,i)=>{
+    offsets[id]=byteLength();
+    const imgId=imgIds[i];
+    const stream=`q ${W} 0 0 ${H} 0 0 cm /Im${i} Do Q`;
+    push(`${id} 0 obj\n<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${W} ${H}] /Contents ${id} 0 R /Resources << /XObject << /Im${i} ${imgId} 0 R >> >> >>\nendobj\n`);
+    // Oprav — contents musí být jiný objekt; uložme stream jako inline
+  });
+
+  // Přepišme to správně — page + stream jako jeden objekt není standard
+  // Resetuj a udělej to čistě
+  parts.length=0;
+  const offs={};
+  const chunks=[];
+
+  function w(s){chunks.push(enc.encode(s));}
+  function wb(b){chunks.push(b);}
+  function size(){return chunks.reduce((s,c)=>s+c.length,0);}
+
+  w('%PDF-1.4\n%\xff\xff\xff\xff\n');
+
+  // Každá stránka: page obj + content stream obj + image xobj
+  // ids: catalog=1, pages=2, pak trojice (pageObj, contentObj, imageObj) per page
+  const firstId=3;
+  const pageObjIds=pages.map((_,i)=>firstId+i*3);
+  const contentObjIds=pages.map((_,i)=>firstId+i*3+1);
+  const imageObjIds=pages.map((_,i)=>firstId+i*3+2);
+  const maxId=firstId+n*3;
+
+  // Image XObjects
+  imageObjIds.forEach((id,i)=>{
+    offs[id]=size();
+    w(`${id} 0 obj\n`);
+    w(`<< /Type /XObject /Subtype /Image /Width ${W} /Height ${H} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${pages[i].length} >>\n`);
+    w('stream\n');
+    wb(pages[i]);
+    w('\nendstream\nendobj\n');
+  });
+
+  // Content streams
+  contentObjIds.forEach((id,i)=>{
+    const stream=`q ${W} 0 0 ${H} 0 0 cm /Im${i} Do Q`;
+    const sb=enc.encode(stream);
+    offs[id]=size();
+    w(`${id} 0 obj\n<< /Length ${sb.length} >>\nstream\n`);
+    wb(sb);
+    w('\nendstream\nendobj\n');
+  });
+
+  // Page objects
+  pageObjIds.forEach((id,i)=>{
+    offs[id]=size();
+    w(`${id} 0 obj\n`);
+    w(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] `);
+    w(`/Contents ${contentObjIds[i]} 0 R `);
+    w(`/Resources << /XObject << /Im${i} ${imageObjIds[i]} 0 R >> >> >>\n`);
+    w('endobj\n');
+  });
+
+  // Pages
+  offs[2]=size();
+  w('2 0 obj\n<< /Type /Pages /Kids [');
+  w(pageObjIds.map(id=>`${id} 0 R`).join(' '));
+  w(`] /Count ${n} >>\nendobj\n`);
+
+  // Catalog
+  offs[1]=size();
+  w('1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n');
+
+  // Xref
+  const xrefOffset=size();
+  w(`xref\n0 ${maxId+1}\n`);
+  w('0000000000 65535 f \n');
+  for(let id=1;id<=maxId;id++){
+    const o=offs[id]??0;
+    w(String(o).padStart(10,'0')+' 00000 n \n');
+  }
+  w(`trailer\n<< /Size ${maxId+1} /Root 1 0 R >>\n`);
+  w(`startxref\n${xrefOffset}\n%%EOF\n`);
+
+  // Spoj vše do jednoho Uint8Array
+  const total=chunks.reduce((s,c)=>s+c.length,0);
+  const out=new Uint8Array(total);
+  let pos=0;
+  for(const c of chunks){out.set(c,pos);pos+=c.length;}
+  return out;
+}
+
+// Vykreslí jeden snímek přímo na <canvas> a vrátí dataURL
+async function renderSlideToCanvas(slide,slideIdx,W,H){
+  const cvs=document.createElement('canvas');
+  cvs.width=W;cvs.height=H;
+  const ctx=cvs.getContext('2d');
+
+  // Pozadí
+  ctx.fillStyle=slide.bg;
+  ctx.fillRect(0,0,W,H);
+
+  // Dekorativní velké číslo — pravý dolní roh
+  ctx.save();
+  ctx.globalAlpha=0.055;
+  ctx.fillStyle=slide.text;
+  ctx.font=`900 ${Math.round(H*0.9)}px 'Playfair Display',Georgia,serif`;
+  ctx.textAlign='right';
+  ctx.textBaseline='bottom';
+  ctx.fillText(String(slideIdx+1).padStart(2,'0'),W*1.01,H*1.06);
+  ctx.restore();
+
+  // Horní linka
+  const grad=ctx.createLinearGradient(0,0,W,0);
+  grad.addColorStop(0,'rgba(255,255,255,0)');
+  grad.addColorStop(0.3,'rgba(255,255,255,0.4)');
+  grad.addColorStop(0.7,'rgba(255,255,255,0.4)');
+  grad.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,W,2);
+
+  // Číslo snímku — pravý horní roh
+  ctx.save();
+  ctx.globalAlpha=0.32;
+  ctx.fillStyle=slide.text;
+  ctx.font=`600 11px Inter,sans-serif`;
+  ctx.textAlign='right';
+  ctx.textBaseline='top';
+  ctx.letterSpacing='2px';
+  const counterTxt=(String(slideIdx+1).padStart(2,'0')+' / '+slides.length).toUpperCase();
+  ctx.fillText(counterTxt,W-20,18);
+  // tick čára
+  ctx.fillRect(W-20-ctx.measureText(counterTxt).width-10,24,12,1);
+  ctx.restore();
+
+  // Foto (slide 0, 1) — načti jako obrázek s crossOrigin
+  const hasPhoto=(slideIdx===0||slideIdx===1);
+  const imgAreaW=hasPhoto?W*0.36:0;
+  const imgAreaX=W-imgAreaW-W*0.045;
+  if(hasPhoto&&slide.img){
+    await new Promise(res=>{
+      const im=new Image();
+      im.onload=()=>{
+        const isPortrait=slideIdx===1;
+        const aspect=isPortrait?3/4:4/3;
+        const iH=Math.min(imgAreaW/aspect,H*0.72);
+        const iW=iH*aspect;
+        const ix=imgAreaX+(imgAreaW-iW)/2;
+        const iy=(H-iH)/2;
+        // Stín
+        ctx.save();
+        ctx.shadowColor='rgba(0,0,0,0.5)';
+        ctx.shadowBlur=40;
+        ctx.shadowOffsetY=12;
+        ctx.drawImage(im,ix,iy,iW,iH);
+        ctx.restore();
+        // Jemný outline
+        ctx.strokeStyle='rgba(255,255,255,0.12)';
+        ctx.lineWidth=1;
+        ctx.strokeRect(ix,iy,iW,iH);
+        res();
+      };
+      im.onerror=res; // pokračuj i bez fotky
+      im.crossOrigin='anonymous';
+      im.src=slide.img;
+    });
+  }
+
+  // Textová oblast
+  const contentW=hasPhoto?W*0.52:W*0.76;
+  const leftPad=W*0.05;
+  const topPos=H*0.1;
+  let y=topPos;
+
+  // Kategorie — malý popisek
+  ctx.save();
+  ctx.globalAlpha=0.3;
+  ctx.fillStyle=slide.text;
+  ctx.font=`600 11px Inter,sans-serif`;
+  ctx.textAlign='left';
+  ctx.textBaseline='top';
+  ctx.fillText('— ETIKA FOTOŽURNALISTIKY',leftPad,y);
+  ctx.restore();
+  y+=26;
+
+  // Nadpis
+  if(slide.title){
+    ctx.save();
+    ctx.fillStyle=slide.text;
+    const titleSize=Math.min(Math.max(22,W*0.028),34);
+    ctx.font=`700 ${titleSize}px 'Playfair Display',Georgia,serif`;
+    ctx.textAlign='left';
+    ctx.textBaseline='top';
+    // Zalomení nadpisu
+    y=wrapText(ctx,slide.title,leftPad,y,contentW-leftPad*1.5,titleSize*1.18);
+    ctx.restore();
+    y+=10;
+  }
+
+  // Oddělovač
+  ctx.save();
+  ctx.globalAlpha=0.25;
+  const sepGrad=ctx.createLinearGradient(leftPad,0,leftPad+60,0);
+  sepGrad.addColorStop(0,slide.text);
+  sepGrad.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.fillStyle=sepGrad;
+  ctx.fillRect(leftPad,y,60,1);
+  ctx.restore();
+  y+=14;
+
+  // Body text
+  if(slide.body){
+    const paras=slide.body.split(/\n\n+/);
+    paras.forEach((para,pi)=>{
+      if(!para.trim())return;
+      const firstLine=para.trim().split('\n')[0];
+      const isQ=firstLine.endsWith('?');
+      ctx.save();
+      ctx.fillStyle=slide.text;
+      ctx.globalAlpha=isQ?0.88:0.65;
+      const fs=isQ?Math.min(18,W*0.016):Math.min(13,W*0.012);
+      ctx.font=`300 ${isQ?'italic ':' '}${fs}px ${isQ?"'Crimson Pro',Georgia,serif":"Inter,sans-serif"}`;
+      ctx.textAlign='left';
+      ctx.textBaseline='top';
+      y=wrapText(ctx,para.trim(),leftPad,y,contentW-leftPad*1.5,fs*1.6);
+      ctx.restore();
+      if(pi<paras.length-1)y+=isQ?10:6;
+    });
+  }
+
+  return cvs.toDataURL('image/jpeg',0.92);
+}
+
+// Pomocná funkce — zalomení textu na canvas
+function wrapText(ctx,text,x,y,maxW,lineH){
+  const lines=text.split('\n');
+  lines.forEach(line=>{
+    const words=line.split(' ');
+    let row='';
+    words.forEach(word=>{
+      const test=row?row+' '+word:word;
+      if(ctx.measureText(test).width>maxW&&row){
+        ctx.fillText(row,x,y);
+        y+=lineH;
+        row=word;
+      }else{
+        row=test;
+      }
+    });
+    if(row){ctx.fillText(row,x,y);y+=lineH;}
+  });
+  return y;
+}
+
+// ── START ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
